@@ -1,6 +1,4 @@
-use strum::EnumString;
-
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, EnumString)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Button {
 	A,
 	B,
@@ -25,7 +23,7 @@ pub enum Button {
 	Touchpad,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, EnumString)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Axis {
 	LeftX,
 	LeftY,
@@ -37,9 +35,15 @@ pub enum Axis {
 
 #[derive(Clone, Debug)]
 pub enum InputEvent {
-	ButtonUp(u32, Button),
 	ButtonDown(u32, Button),
+	ButtonUp(u32, Button),
 	Axis(u32, Axis, i16),
 	Added(u32, String),
 	Removed(u32),
+}
+
+#[derive(Clone, Debug)]
+pub enum Action {
+	KeyDown(input_linux::Key),
+	KeyUp(input_linux::Key)
 }

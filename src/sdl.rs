@@ -59,31 +59,35 @@ pub fn sdl_task(sender: crossbeam_channel::Sender<InputEvent>) -> Result<(), Str
 
 		// println!("{:?}", event);
 
-		match event {
+		let res = match event {
 			Event::ControllerAxisMotion {
 				which, axis, value, ..
 			} => {
-				sender.send(InputEvent::Axis(which, axis.into(), value)).unwrap();
+				sender.send(InputEvent::Axis(which, axis.into(), value))
 			}
 			Event::ControllerButtonDown { which, button, .. } => {
-				sender.send(InputEvent::ButtonDown(which, button.into())).unwrap();
+				sender.send(InputEvent::ButtonDown(which, button.into()))
 			}
 			Event::ControllerButtonUp { which, button, .. } => {
-				sender.send(InputEvent::ButtonUp(which, button.into())).unwrap();
+				sender.send(InputEvent::ButtonUp(which, button.into()))
 			}
 			Event::ControllerDeviceAdded { which, .. } => {
 				if let Some(ev) = maybe_add_controller(which) {
-					sender.send(ev).unwrap();
+					sender.send(ev)
 				}
+				else {Ok(())}
 			},
 			Event::ControllerDeviceRemoved { which, .. } => {
 				if maybe_remove_controller(which) {
-					sender.send(InputEvent::Removed(which)).unwrap();
+					sender.send(InputEvent::Removed(which))
 				}
+				else {Ok(())}
 			},
 			Event::Quit { .. } => break,
-			_ => (),
-		}
+			_ => Ok(()),
+		};
+		if let Err(_) = res { break }
+		
 	}
 
 	Ok(())
