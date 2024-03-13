@@ -1,27 +1,38 @@
-use std::{fs::OpenOptions, io};
 use std::os::unix::fs::OpenOptionsExt;
+use std::{fs::OpenOptions, io};
 
 use crossbeam_channel::select;
-use input_linux::{EventKind, EventTime, InputEvent, InputId, KeyEvent, KeyState, SynchronizeEvent, SynchronizeKind, UInputHandle};
+use input_linux::{
+	EventKind, EventTime, InputEvent, InputId, KeyEvent, KeyState, SynchronizeEvent, SynchronizeKind, UInputHandle,
+};
+use lazy_static::lazy_static;
+use strum::IntoEnumIterator;
 
-use crate::types::Action;
+use crate::types::{Action, Key};
 
-pub fn actions_task(actions: crossbeam_channel::Receiver<Action>) -> io::Result<()> {
-	
+lazy_static! {
+	// This is very stupid but at least I only do it once.
+	static ref KEY_TO_UINPUT: Vec<input_linux::Key> = Key::iter().map(|k| {
+		let vec = serde_json::to_vec(&k).unwrap();
+		serde_json::from_slice(vec.as_slice()).unwrap_or(input_linux::Key::Unknown)
+	}).collect();
+}
+
+pub fn linux_actions_task(actions: crossbeam_channel::Receiver<Action>) -> io::Result<()> {
 	let uinput_file = OpenOptions::new()
 		.read(false)
 		.write(true)
 		.custom_flags(libc::O_NONBLOCK)
 		.open("/dev/uinput")?;
 	let uhandle = UInputHandle::new(uinput_file);
-	
+
 	uhandle.set_evbit(EventKind::Key)?;
 	uhandle.set_keybit(input_linux::Key::A)?;
-	
+
 	// uhandle.set_evbit(EventKind::Relative)?;
 	// uhandle.set_relbit(RelativeAxis::X)?;
 	// uhandle.set_relbit(RelativeAxis::Y)?;
-	
+
 	let input_id = InputId {
 		bustype: input_linux::sys::BUS_USB,
 		vendor: 0x1234,
@@ -35,21 +46,21 @@ pub fn actions_task(actions: crossbeam_channel::Receiver<Action>) -> io::Result<
 	loop {
 		let _ = select! {
 			recv(actions) -> act => match act {
-				Ok(ev) => {
-					println!("{:?}", ev);
+				Ok(act) => {
+					println!("{}", json5::to_string(&act).unwrap());
 					let mut events = Vec::new();
-					match ev {
+					match act {
 						Action::KeyDown(key) => {
 							events.push(*InputEvent::from(KeyEvent::new(
 								ZERO,
-								key,
+								KEY_TO_UINPUT[key as usize],
 								KeyState::PRESSED
 							)).as_raw());
 						}
 						Action::KeyUp(key) => {
 							events.push(*InputEvent::from(KeyEvent::new(
 								ZERO,
-								key,
+								KEY_TO_UINPUT[key as usize],
 								KeyState::RELEASED
 							)).as_raw());
 						}
@@ -71,9 +82,8 @@ pub fn actions_task(actions: crossbeam_channel::Receiver<Action>) -> io::Result<
 			}
 		};
 	}
-	
+
 	uhandle.dev_destroy()?;
-	
+
 	Ok(())
-	
 }

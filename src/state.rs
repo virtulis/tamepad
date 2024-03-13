@@ -1,7 +1,6 @@
 use crossbeam_channel::select;
-use input_linux::Key;
 
-use crate::types::{Action, Button, InputEvent};
+use crate::types::{Action, Button, InputEvent, Key};
 
 pub fn state_task(
 	events: crossbeam_channel::Receiver<InputEvent>,

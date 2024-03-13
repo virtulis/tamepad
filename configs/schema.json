@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Overlay",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "Button"
+      ],
+      "properties": {
+        "Button": {
+          "$ref": "#/definitions/Button"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "Axis"
+      ],
+      "properties": {
+        "Axis": {
+          "$ref": "#/definitions/Axis"
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "Axis": {
+      "type": "string",
+      "enum": [
+        "LeftX",
+        "LeftY",
+        "RightX",
+        "RightY",
+        "TriggerLeft",
+        "TriggerRight"
+      ]
+    },
+    "Button": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "X",
+        "Y",
+        "Back",
+        "Guide",
+        "Start",
+        "LeftStick",
+        "RightStick",
+        "LeftShoulder",
+        "RightShoulder",
+        "DPadUp",
+        "DPadDown",
+        "DPadLeft",
+        "DPadRight",
+        "Misc1",
+        "Paddle1",
+        "Paddle2",
+        "Paddle3",
+        "Paddle4",
+        "Touchpad",
+        "TriggerLeft",
+        "TriggerRight"
+      ]
+    }
+  }
+}
