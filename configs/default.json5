@@ -1,0 +1,59 @@
+{
+	"combos": {
+		"AX": {
+			"buttons": ["A", "X"],
+			"timeout": 100
+		},
+		"BY": {
+			"buttons": ["B", "Y"],
+			"timeout": 100
+		}
+	},
+	"baseOverlay": "base",
+	"overlays": {
+		"base": {
+			"bindings": [
+				{
+					button: "A",
+					map: { key: "Space" }
+				},
+				{
+					button: "B",
+					map: { key: "Dot" }
+				}
+			]
+		},
+		"abcdef": {
+			bindings: [
+				{
+					button: "A",
+					map: { key: "A" }
+				},
+				{
+					combo: "AX",
+					map: { key: "B" }
+				},
+				{
+					button: "X",
+					map: { key: "C" }
+				}
+			]
+		},
+		"ghijkl": {
+			bindings: [
+				{
+					button: "A",
+					map: { key: "G" }
+				},
+				{
+					combo: "AX",
+					map: { key: "H" }
+				},
+				{
+					button: "X",
+					map: { key: "I" }
+				}
+			]
+		}
+	}
+}

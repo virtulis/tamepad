@@ -1,9 +1,12 @@
-use fs_extra::file::write_all;
-use schemars::{JsonSchema, schema_for};
-use serde::{Serialize, Deserialize};
-use strum::EnumIter;
+use std::collections::HashMap;
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, JsonSchema)]
+use fs_extra::file::write_all;
+use indexmap::IndexMap;
+use schemars::{JsonSchema, schema_for};
+use serde::{Deserialize, Serialize};
+use strum::{EnumIter, EnumString, IntoStaticStr};
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, JsonSchema, EnumIter, EnumString, IntoStaticStr)]
 pub enum Button {
 	
 	A,
@@ -34,6 +37,14 @@ pub enum Button {
 	
 }
 
+impl Button {
+	
+	pub fn into_str(self) -> &'static str {
+		self.into()
+	}
+	
+}
+
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, JsonSchema)]
 pub enum Axis {
 	
@@ -47,6 +58,12 @@ pub enum Axis {
 	
 }
 
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, JsonSchema)]
+pub enum Stick {
+	Left,
+	Right,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub enum InputEvent {
 	ButtonDown(u32, Button),
@@ -56,24 +73,100 @@ pub enum InputEvent {
 	Removed(u32),
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 pub enum Action {
 	KeyDown(Key),
-	KeyUp(Key)
+	KeyUp(Key),
+	AddOverlay(String),
+	RemoveOverlay(String)
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-pub enum Binding {
-	// Action(Action),
+#[serde(rename_all = "camelCase")]
+pub enum StateMapping {
+	Key(Key),
 	Overlay(String),
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, JsonSchema)]
-pub enum Overlay {
-	Button(Button),
-	Axis(Axis)
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+pub struct ButtonCombo {
+	pub timeout: u64,
+	pub buttons: Vec<Button>, 
 }
 
+#[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
+pub struct ButtonHandler {
+	pub map: Option<StateMapping>,
+	pub down: Option<Action>,
+	pub up: Option<Action>,
+	pub label: Option<String>
+}
+
+#[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CircleHandler {
+	pub min_value: i16,
+	pub positions: Vec<CirclePosition>
+}
+
+#[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CirclePosition {
+	pub from_degrees: f32,
+	pub state: Option<StateMapping>,
+	pub enter: Option<Action>,
+	pub exit: Option<Action>,
+	pub label: Option<String>,
+}
+
+#[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct StickHandler {
+	
+	pub button_map: Option<StateMapping>,
+	pub button_down: Option<Action>,
+	pub button_up: Option<Action>,
+	pub button_label: Option<String>,
+	
+	pub circle: Option<CircleHandler>
+	
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(untagged)]
+pub enum Binding {
+	Button {
+		button: Button,
+		#[serde(flatten)]
+		handler: ButtonHandler
+	},
+	Combo {
+		combo: String,
+		#[serde(flatten)]
+		handler: ButtonHandler
+	},
+	Stick {
+		stick: Stick,
+		#[serde(flatten)]
+		handler: StickHandler
+	},
+	Axis { axis: Axis },
+}
+
+#[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
+pub struct Overlay {
+	pub label: Option<String>,
+	pub bindings: Vec<Binding>,
+}
+
+#[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct GamepadConfig {
+	pub combos: IndexMap<String, ButtonCombo>,
+	pub overlays: IndexMap<String, Overlay>,
+	pub base_overlay: String,
+}
 
 /// Copied from input-linux, mapped to it by name
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, JsonSchema, EnumIter)]
@@ -833,7 +926,10 @@ pub enum Key {
 }
 
 pub fn write_schema() {
-	let schema = schema_for!(Overlay);
+	
+	let schema = schema_for!(GamepadConfig);
 	let str  = format!("{}", serde_json::to_string_pretty(&schema).unwrap());
+	let str = str.replace("  ", "\t"); // idfk
 	write_all("configs/schema.json", &str).unwrap();
+	
 }

@@ -1,71 +1,1825 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Overlay",
-  "oneOf": [
-    {
-      "type": "object",
-      "required": [
-        "Button"
-      ],
-      "properties": {
-        "Button": {
-          "$ref": "#/definitions/Button"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "Axis"
-      ],
-      "properties": {
-        "Axis": {
-          "$ref": "#/definitions/Axis"
-        }
-      },
-      "additionalProperties": false
-    }
-  ],
-  "definitions": {
-    "Axis": {
-      "type": "string",
-      "enum": [
-        "LeftX",
-        "LeftY",
-        "RightX",
-        "RightY",
-        "TriggerLeft",
-        "TriggerRight"
-      ]
-    },
-    "Button": {
-      "type": "string",
-      "enum": [
-        "A",
-        "B",
-        "X",
-        "Y",
-        "Back",
-        "Guide",
-        "Start",
-        "LeftStick",
-        "RightStick",
-        "LeftShoulder",
-        "RightShoulder",
-        "DPadUp",
-        "DPadDown",
-        "DPadLeft",
-        "DPadRight",
-        "Misc1",
-        "Paddle1",
-        "Paddle2",
-        "Paddle3",
-        "Paddle4",
-        "Touchpad",
-        "TriggerLeft",
-        "TriggerRight"
-      ]
-    }
-  }
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"title": "GamepadConfig",
+	"type": "object",
+	"required": [
+		"baseOverlay",
+		"combos",
+		"overlays"
+	],
+	"properties": {
+		"baseOverlay": {
+			"type": "string"
+		},
+		"combos": {
+			"type": "object",
+			"additionalProperties": {
+				"$ref": "#/definitions/ButtonCombo"
+			}
+		},
+		"overlays": {
+			"type": "object",
+			"additionalProperties": {
+				"$ref": "#/definitions/Overlay"
+			}
+		}
+	},
+	"definitions": {
+		"Action": {
+			"oneOf": [
+				{
+					"type": "object",
+					"required": [
+						"keyDown"
+					],
+					"properties": {
+						"keyDown": {
+							"$ref": "#/definitions/Key"
+						}
+					},
+					"additionalProperties": false
+				},
+				{
+					"type": "object",
+					"required": [
+						"keyUp"
+					],
+					"properties": {
+						"keyUp": {
+							"$ref": "#/definitions/Key"
+						}
+					},
+					"additionalProperties": false
+				},
+				{
+					"type": "object",
+					"required": [
+						"addOverlay"
+					],
+					"properties": {
+						"addOverlay": {
+							"type": "string"
+						}
+					},
+					"additionalProperties": false
+				},
+				{
+					"type": "object",
+					"required": [
+						"removeOverlay"
+					],
+					"properties": {
+						"removeOverlay": {
+							"type": "string"
+						}
+					},
+					"additionalProperties": false
+				}
+			]
+		},
+		"Axis": {
+			"type": "string",
+			"enum": [
+				"LeftX",
+				"LeftY",
+				"RightX",
+				"RightY",
+				"TriggerLeft",
+				"TriggerRight"
+			]
+		},
+		"Binding": {
+			"anyOf": [
+				{
+					"type": "object",
+					"required": [
+						"button"
+					],
+					"properties": {
+						"button": {
+							"$ref": "#/definitions/Button"
+						},
+						"down": {
+							"anyOf": [
+								{
+									"$ref": "#/definitions/Action"
+								},
+								{
+									"type": "null"
+								}
+							]
+						},
+						"label": {
+							"type": [
+								"string",
+								"null"
+							]
+						},
+						"map": {
+							"anyOf": [
+								{
+									"$ref": "#/definitions/StateMapping"
+								},
+								{
+									"type": "null"
+								}
+							]
+						},
+						"up": {
+							"anyOf": [
+								{
+									"$ref": "#/definitions/Action"
+								},
+								{
+									"type": "null"
+								}
+							]
+						}
+					}
+				},
+				{
+					"type": "object",
+					"required": [
+						"combo"
+					],
+					"properties": {
+						"combo": {
+							"type": "string"
+						},
+						"down": {
+							"anyOf": [
+								{
+									"$ref": "#/definitions/Action"
+								},
+								{
+									"type": "null"
+								}
+							]
+						},
+						"label": {
+							"type": [
+								"string",
+								"null"
+							]
+						},
+						"map": {
+							"anyOf": [
+								{
+									"$ref": "#/definitions/StateMapping"
+								},
+								{
+									"type": "null"
+								}
+							]
+						},
+						"up": {
+							"anyOf": [
+								{
+									"$ref": "#/definitions/Action"
+								},
+								{
+									"type": "null"
+								}
+							]
+						}
+					}
+				},
+				{
+					"type": "object",
+					"required": [
+						"stick"
+					],
+					"properties": {
+						"buttonDown": {
+							"anyOf": [
+								{
+									"$ref": "#/definitions/Action"
+								},
+								{
+									"type": "null"
+								}
+							]
+						},
+						"buttonLabel": {
+							"type": [
+								"string",
+								"null"
+							]
+						},
+						"buttonMap": {
+							"anyOf": [
+								{
+									"$ref": "#/definitions/StateMapping"
+								},
+								{
+									"type": "null"
+								}
+							]
+						},
+						"buttonUp": {
+							"anyOf": [
+								{
+									"$ref": "#/definitions/Action"
+								},
+								{
+									"type": "null"
+								}
+							]
+						},
+						"circle": {
+							"anyOf": [
+								{
+									"$ref": "#/definitions/CircleHandler"
+								},
+								{
+									"type": "null"
+								}
+							]
+						},
+						"stick": {
+							"$ref": "#/definitions/Stick"
+						}
+					}
+				},
+				{
+					"type": "object",
+					"required": [
+						"axis"
+					],
+					"properties": {
+						"axis": {
+							"$ref": "#/definitions/Axis"
+						}
+					}
+				}
+			]
+		},
+		"Button": {
+			"type": "string",
+			"enum": [
+				"A",
+				"B",
+				"X",
+				"Y",
+				"Back",
+				"Guide",
+				"Start",
+				"LeftStick",
+				"RightStick",
+				"LeftShoulder",
+				"RightShoulder",
+				"DPadUp",
+				"DPadDown",
+				"DPadLeft",
+				"DPadRight",
+				"Misc1",
+				"Paddle1",
+				"Paddle2",
+				"Paddle3",
+				"Paddle4",
+				"Touchpad",
+				"TriggerLeft",
+				"TriggerRight"
+			]
+		},
+		"ButtonCombo": {
+			"type": "object",
+			"required": [
+				"buttons",
+				"timeout"
+			],
+			"properties": {
+				"buttons": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Button"
+					}
+				},
+				"timeout": {
+					"type": "integer",
+					"format": "uint64",
+					"minimum": 0.0
+				}
+			}
+		},
+		"CircleHandler": {
+			"type": "object",
+			"required": [
+				"minValue",
+				"positions"
+			],
+			"properties": {
+				"minValue": {
+					"type": "integer",
+					"format": "int16"
+				},
+				"positions": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/CirclePosition"
+					}
+				}
+			}
+		},
+		"CirclePosition": {
+			"type": "object",
+			"required": [
+				"fromDegrees"
+			],
+			"properties": {
+				"enter": {
+					"anyOf": [
+						{
+							"$ref": "#/definitions/Action"
+						},
+						{
+							"type": "null"
+						}
+					]
+				},
+				"exit": {
+					"anyOf": [
+						{
+							"$ref": "#/definitions/Action"
+						},
+						{
+							"type": "null"
+						}
+					]
+				},
+				"fromDegrees": {
+					"type": "number",
+					"format": "float"
+				},
+				"label": {
+					"type": [
+						"string",
+						"null"
+					]
+				},
+				"state": {
+					"anyOf": [
+						{
+							"$ref": "#/definitions/StateMapping"
+						},
+						{
+							"type": "null"
+						}
+					]
+				}
+			}
+		},
+		"Key": {
+			"description": "Copied from input-linux, mapped to it by name",
+			"oneOf": [
+				{
+					"type": "string",
+					"enum": [
+						"Reserved",
+						"Esc",
+						"Num1",
+						"Num2",
+						"Num3",
+						"Num4",
+						"Num5",
+						"Num6",
+						"Num7",
+						"Num8",
+						"Num9",
+						"Num0",
+						"Minus",
+						"Equal",
+						"Backspace",
+						"Tab",
+						"Q",
+						"W",
+						"E",
+						"R",
+						"T",
+						"Y",
+						"U",
+						"I",
+						"O",
+						"P",
+						"LeftBrace",
+						"RightBrace",
+						"Enter",
+						"LeftCtrl",
+						"A",
+						"S",
+						"D",
+						"F",
+						"G",
+						"H",
+						"J",
+						"K",
+						"L",
+						"Semicolon",
+						"Apostrophe",
+						"Grave",
+						"LeftShift",
+						"Backslash",
+						"Z",
+						"X",
+						"C",
+						"V",
+						"B",
+						"N",
+						"M",
+						"Comma",
+						"Dot",
+						"Slash",
+						"RightShift",
+						"KpAsterisk",
+						"LeftAlt",
+						"Space",
+						"CapsLock",
+						"F1",
+						"F2",
+						"F3",
+						"F4",
+						"F5",
+						"F6",
+						"F7",
+						"F8",
+						"F9",
+						"F10",
+						"NumLock",
+						"ScrollLock",
+						"Kp7",
+						"Kp8",
+						"Kp9",
+						"KpMinus",
+						"Kp4",
+						"Kp5",
+						"Kp6",
+						"KpPlus",
+						"Kp1",
+						"Kp2",
+						"Kp3",
+						"Kp0",
+						"KpDot",
+						"Unknown54",
+						"ZenkakuHankaku",
+						"NonUsBackslashAndPipe",
+						"F11",
+						"F12",
+						"Ro",
+						"Katakana",
+						"Hiragana",
+						"Henkan",
+						"KatakanaHiragana",
+						"Muhenkan",
+						"KpJpComma",
+						"KpEnter",
+						"RightCtrl",
+						"KpSlash",
+						"Sysrq",
+						"RightAlt",
+						"LineFeed",
+						"Home",
+						"Up",
+						"PageUp",
+						"Left",
+						"Right",
+						"End",
+						"Down",
+						"PageDown",
+						"Insert",
+						"Delete",
+						"Macro",
+						"Mute",
+						"VolumeDown",
+						"VolumeUp",
+						"KpEqual",
+						"KpPlusMinus",
+						"Pause",
+						"KpComma",
+						"Hanja",
+						"Yen",
+						"LeftMeta",
+						"RightMeta",
+						"Compose",
+						"Again",
+						"Front",
+						"Setup",
+						"SendFile",
+						"DeleteFile",
+						"Xfer",
+						"Prog1",
+						"Prog2",
+						"MSDOS",
+						"CycleWindows",
+						"Mail",
+						"Computer",
+						"CloseCD",
+						"EjectCD",
+						"EjectCloseCD",
+						"NextSong",
+						"PlayPause",
+						"PreviousSong",
+						"StopCD",
+						"Record",
+						"Rewind",
+						"Iso",
+						"Move",
+						"Edit",
+						"ScrollUp",
+						"ScrollDown",
+						"KpLeftParen",
+						"KpRightParen",
+						"F13",
+						"F14",
+						"F15",
+						"F16",
+						"F17",
+						"F18",
+						"F19",
+						"F20",
+						"F21",
+						"F22",
+						"F23",
+						"F24",
+						"PlayCD",
+						"PauseCD",
+						"Prog3",
+						"Prog4",
+						"Suspend",
+						"Play",
+						"FastForward",
+						"BassBoost",
+						"Hp",
+						"Camera",
+						"Sound",
+						"Question",
+						"Email",
+						"Chat",
+						"Search",
+						"Connect",
+						"Sport",
+						"Shop",
+						"Alterase",
+						"BrightnessDown",
+						"BrightnessUp",
+						"Media",
+						"IllumToggle",
+						"IllumDown",
+						"IllumUp",
+						"Documents",
+						"Battery",
+						"Bluetooth",
+						"WLAN",
+						"UWB",
+						"Unknown",
+						"Button0",
+						"Button1",
+						"Button2",
+						"Button3",
+						"Button4",
+						"Button5",
+						"Button6",
+						"Button7",
+						"Button8",
+						"Button9",
+						"ButtonLeft",
+						"ButtonRight",
+						"ButtonMiddle",
+						"ButtonSide",
+						"ButtonExtra",
+						"ButtonForward",
+						"ButtonBack",
+						"ButtonTask",
+						"ButtonTrigger",
+						"ButtonThumb",
+						"ButtonThumb2",
+						"ButtonTop",
+						"ButtonTop2",
+						"ButtonPinkie",
+						"ButtonBase",
+						"ButtonBase2",
+						"ButtonBase3",
+						"ButtonBase4",
+						"ButtonBase5",
+						"ButtonBase6",
+						"ButtonDead",
+						"ButtonC",
+						"ButtonZ",
+						"ButtonTL",
+						"ButtonTR",
+						"ButtonTL2",
+						"ButtonTR2",
+						"ButtonSelect",
+						"ButtonStart",
+						"ButtonMode",
+						"ButtonThumbl",
+						"ButtonThumbr",
+						"Unknown13F",
+						"ButtonToolPen",
+						"ButtonToolRubber",
+						"ButtonToolBrush",
+						"ButtonToolPencil",
+						"ButtonToolAirbrush",
+						"ButtonToolFinger",
+						"ButtonToolMouse",
+						"ButtonToolLens",
+						"ButtonStylus3",
+						"ButtonTouch",
+						"ButtonStylus",
+						"ButtonStylus2",
+						"ButtonToolDoubleTap",
+						"ButtonToolTripleTap",
+						"ButtonWheel",
+						"ButtonGearUp",
+						"Ok",
+						"Select",
+						"Goto",
+						"Clear",
+						"Power2",
+						"Option",
+						"Time",
+						"Vendor",
+						"Archive",
+						"Channel",
+						"Favorites",
+						"EPG",
+						"MHP",
+						"Language",
+						"Title",
+						"Subtitle",
+						"Angle",
+						"FullScreen",
+						"Mode",
+						"Keyboard",
+						"AspectRatio",
+						"Sat2",
+						"Radio",
+						"Player",
+						"Text",
+						"Aux",
+						"Mp3",
+						"Directory",
+						"List",
+						"Calendar",
+						"Red",
+						"Green",
+						"Yellow",
+						"Blue",
+						"First",
+						"Ab",
+						"Next",
+						"Restart",
+						"Slow",
+						"Shuffle",
+						"Break",
+						"Previous",
+						"Digits",
+						"Teen",
+						"Twen",
+						"Dollar",
+						"Euro",
+						"FrameForward",
+						"DelEol",
+						"DelEos",
+						"InsLine",
+						"DelLine",
+						"Fn",
+						"FnEsc",
+						"FnF1",
+						"FnF2",
+						"FnF3",
+						"FnF4",
+						"FnF5",
+						"FnF6",
+						"FnF7",
+						"FnF8",
+						"FnF9",
+						"FnF10",
+						"FnF11",
+						"FnF12",
+						"Fn1",
+						"Fn2",
+						"FnD",
+						"FnE",
+						"FnF",
+						"FnS",
+						"FnB",
+						"BrlDot1",
+						"BrlDot2",
+						"BrlDot3",
+						"BrlDot4",
+						"BrlDot5",
+						"BrlDot6",
+						"BrlDot7",
+						"BrlDot8",
+						"BrlDot9",
+						"BrlDot10",
+						"Numeric2",
+						"Numeric3",
+						"Numeric4",
+						"Numeric5",
+						"Numeric6",
+						"Numeric7",
+						"Numeric8",
+						"Numeric9",
+						"NumericStar",
+						"NumericPound",
+						"NumericB",
+						"NumericC",
+						"NumericD",
+						"CameraFocus",
+						"TouchpadOn",
+						"TouchpadOff",
+						"CameraZoomin",
+						"CameraZoomout",
+						"CameraUp",
+						"CameraDown",
+						"CameraLeft",
+						"CameraRight",
+						"AttendantOn",
+						"AttendantOff",
+						"ButtonDpadUp",
+						"ButtonDpadDown",
+						"ButtonDpadLeft",
+						"ButtonDpadRight",
+						"RotateLockToggle",
+						"InputAssistPrev",
+						"InputAssistNext",
+						"InputAssistPrevGroup",
+						"InputAssistNextGroup",
+						"InputAssistAccept",
+						"InputAssistCancel",
+						"RightDown",
+						"LeftUp",
+						"LeftDown",
+						"Numeric11",
+						"Numeric12",
+						"Audio3dMode",
+						"NextFavorite",
+						"StopRecord",
+						"PauseRecord",
+						"Unmute",
+						"FastReverse",
+						"SlowReverse",
+						"OnscreenKeyboard",
+						"PrivacyScreenToggle",
+						"SelectiveScreenshot",
+						"KbdLcdMenu1",
+						"KbdLcdMenu2",
+						"KbdLcdMenu3",
+						"KbdLcdMenu4",
+						"KbdLcdMenu5"
+					]
+				},
+				{
+					"description": "SC System Power Down",
+					"type": "string",
+					"enum": [
+						"Power"
+					]
+				},
+				{
+					"description": "AL Compiz Scale (Expose)",
+					"type": "string",
+					"enum": [
+						"Scale"
+					]
+				},
+				{
+					"description": "KeyHangeul / KeyHanguel",
+					"type": "string",
+					"enum": [
+						"Hangul"
+					]
+				},
+				{
+					"description": "AC Stop",
+					"type": "string",
+					"enum": [
+						"Stop"
+					]
+				},
+				{
+					"description": "AC Properties",
+					"type": "string",
+					"enum": [
+						"Props"
+					]
+				},
+				{
+					"description": "AC Undo",
+					"type": "string",
+					"enum": [
+						"Undo"
+					]
+				},
+				{
+					"description": "AC Copy",
+					"type": "string",
+					"enum": [
+						"Copy"
+					]
+				},
+				{
+					"description": "AC Open",
+					"type": "string",
+					"enum": [
+						"Open"
+					]
+				},
+				{
+					"description": "AC Paste",
+					"type": "string",
+					"enum": [
+						"Paste"
+					]
+				},
+				{
+					"description": "AC Search",
+					"type": "string",
+					"enum": [
+						"Find"
+					]
+				},
+				{
+					"description": "AC Cut",
+					"type": "string",
+					"enum": [
+						"Cut"
+					]
+				},
+				{
+					"description": "AL Integrated Help Center",
+					"type": "string",
+					"enum": [
+						"Help"
+					]
+				},
+				{
+					"description": "Menu (show menu)",
+					"type": "string",
+					"enum": [
+						"Menu"
+					]
+				},
+				{
+					"description": "AL Calculator",
+					"type": "string",
+					"enum": [
+						"Calc"
+					]
+				},
+				{
+					"description": "SC System Sleep",
+					"type": "string",
+					"enum": [
+						"Sleep"
+					]
+				},
+				{
+					"description": "System Wake Up",
+					"type": "string",
+					"enum": [
+						"Wakeup"
+					]
+				},
+				{
+					"description": "AL Local Machine Browser",
+					"type": "string",
+					"enum": [
+						"File"
+					]
+				},
+				{
+					"description": "AL Internet Browser",
+					"type": "string",
+					"enum": [
+						"WWW"
+					]
+				},
+				{
+					"description": "AL Terminal Lock/Screensaver KeyScreenLock",
+					"type": "string",
+					"enum": [
+						"Coffee"
+					]
+				},
+				{
+					"description": "Display orientation for e.g. tablets (aka KeyDirectionKey)",
+					"type": "string",
+					"enum": [
+						"RotateDisplay"
+					]
+				},
+				{
+					"description": "AC Bookmarks",
+					"type": "string",
+					"enum": [
+						"Bookmarks"
+					]
+				},
+				{
+					"description": "AC Back",
+					"type": "string",
+					"enum": [
+						"Back"
+					]
+				},
+				{
+					"description": "AC Forward",
+					"type": "string",
+					"enum": [
+						"Forward"
+					]
+				},
+				{
+					"description": "Media Select Telephone",
+					"type": "string",
+					"enum": [
+						"Phone"
+					]
+				},
+				{
+					"description": "AL Consumer Control Configuration",
+					"type": "string",
+					"enum": [
+						"Config"
+					]
+				},
+				{
+					"description": "AC Home",
+					"type": "string",
+					"enum": [
+						"Homepage"
+					]
+				},
+				{
+					"description": "AC Refresh",
+					"type": "string",
+					"enum": [
+						"Refresh"
+					]
+				},
+				{
+					"description": "AC Exit",
+					"type": "string",
+					"enum": [
+						"Exit"
+					]
+				},
+				{
+					"description": "AC New",
+					"type": "string",
+					"enum": [
+						"New"
+					]
+				},
+				{
+					"description": "AC Redo/Repeat",
+					"type": "string",
+					"enum": [
+						"Redo"
+					]
+				},
+				{
+					"description": "AC Desktop Show All Applications",
+					"type": "string",
+					"enum": [
+						"AllApplications"
+					]
+				},
+				{
+					"description": "AC Close",
+					"type": "string",
+					"enum": [
+						"Close"
+					]
+				},
+				{
+					"description": "AC Print",
+					"type": "string",
+					"enum": [
+						"Print"
+					]
+				},
+				{
+					"description": "AL Checkbook/Finance",
+					"type": "string",
+					"enum": [
+						"Finance"
+					]
+				},
+				{
+					"description": "AC Cancel",
+					"type": "string",
+					"enum": [
+						"Cancel"
+					]
+				},
+				{
+					"description": "Cycle between available video outputs (Monitor/LCD/TV-out/etc)",
+					"type": "string",
+					"enum": [
+						"SwitchVideoMode"
+					]
+				},
+				{
+					"description": "AC Send",
+					"type": "string",
+					"enum": [
+						"Send"
+					]
+				},
+				{
+					"description": "AC Reply",
+					"type": "string",
+					"enum": [
+						"Reply"
+					]
+				},
+				{
+					"description": "AC Forward Msg",
+					"type": "string",
+					"enum": [
+						"ForwardMail"
+					]
+				},
+				{
+					"description": "AC Save",
+					"type": "string",
+					"enum": [
+						"Save"
+					]
+				},
+				{
+					"description": "drive next video source",
+					"type": "string",
+					"enum": [
+						"VideoNext"
+					]
+				},
+				{
+					"description": "drive previous video source",
+					"type": "string",
+					"enum": [
+						"VideoPrev"
+					]
+				},
+				{
+					"description": "brightness up, after max is min",
+					"type": "string",
+					"enum": [
+						"BrightnessCycle"
+					]
+				},
+				{
+					"description": "Set Auto Brightness: manual brightness control is off, rely on ambient (aka KeyBrightnessZero)",
+					"type": "string",
+					"enum": [
+						"BrightnessAuto"
+					]
+				},
+				{
+					"description": "display device to off state",
+					"type": "string",
+					"enum": [
+						"DisplayOff"
+					]
+				},
+				{
+					"description": "Wireless WAN (LTE, UMTS, GSM, etc.) (aka KeyWiMAX)",
+					"type": "string",
+					"enum": [
+						"WWAN"
+					]
+				},
+				{
+					"description": "Key that controls all radios",
+					"type": "string",
+					"enum": [
+						"Rfkill"
+					]
+				},
+				{
+					"description": "Mute / unmute the microphone",
+					"type": "string",
+					"enum": [
+						"MicMute"
+					]
+				},
+				{
+					"description": "aka ButtonA",
+					"type": "string",
+					"enum": [
+						"ButtonSouth"
+					]
+				},
+				{
+					"description": "aka ButtonB",
+					"type": "string",
+					"enum": [
+						"ButtonEast"
+					]
+				},
+				{
+					"description": "aka ButtonX",
+					"type": "string",
+					"enum": [
+						"ButtonNorth"
+					]
+				},
+				{
+					"description": "aka ButtonY",
+					"type": "string",
+					"enum": [
+						"ButtonWest"
+					]
+				},
+				{
+					"description": "Five fingers on trackpad",
+					"type": "string",
+					"enum": [
+						"ButtonToolQuintTap"
+					]
+				},
+				{
+					"description": "Four fingers on trackpad",
+					"type": "string",
+					"enum": [
+						"ButtonToolQuadtap"
+					]
+				},
+				{
+					"description": "AL OEM Features/Tips/Tutorial",
+					"type": "string",
+					"enum": [
+						"Info"
+					]
+				},
+				{
+					"description": "Media Select Program Guide",
+					"type": "string",
+					"enum": [
+						"Program"
+					]
+				},
+				{
+					"description": "Media Select Home",
+					"type": "string",
+					"enum": [
+						"PVR"
+					]
+				},
+				{
+					"description": "Media Select Computer",
+					"type": "string",
+					"enum": [
+						"PC"
+					]
+				},
+				{
+					"description": "Media Select TV",
+					"type": "string",
+					"enum": [
+						"TV"
+					]
+				},
+				{
+					"description": "Media Select Cable",
+					"type": "string",
+					"enum": [
+						"TV2"
+					]
+				},
+				{
+					"description": "Media Select VCR",
+					"type": "string",
+					"enum": [
+						"VCR"
+					]
+				},
+				{
+					"description": "VCR Plus",
+					"type": "string",
+					"enum": [
+						"VCR2"
+					]
+				},
+				{
+					"description": "Media Select Satellite",
+					"type": "string",
+					"enum": [
+						"Sat"
+					]
+				},
+				{
+					"description": "Media Select CD",
+					"type": "string",
+					"enum": [
+						"CD"
+					]
+				},
+				{
+					"description": "Media Select Tape",
+					"type": "string",
+					"enum": [
+						"Tape"
+					]
+				},
+				{
+					"description": "Media Select Tuner",
+					"type": "string",
+					"enum": [
+						"Tuner"
+					]
+				},
+				{
+					"description": "Media Select DVD",
+					"type": "string",
+					"enum": [
+						"Dvd"
+					]
+				},
+				{
+					"description": "AL Audio Browser",
+					"type": "string",
+					"enum": [
+						"Audio"
+					]
+				},
+				{
+					"description": "AL Movie Browser",
+					"type": "string",
+					"enum": [
+						"Video"
+					]
+				},
+				{
+					"description": "Media Select Messages",
+					"type": "string",
+					"enum": [
+						"Memo"
+					]
+				},
+				{
+					"description": "Channel Increment",
+					"type": "string",
+					"enum": [
+						"ChannelUp"
+					]
+				},
+				{
+					"description": "Channel Decrement",
+					"type": "string",
+					"enum": [
+						"ChannelDown"
+					]
+				},
+				{
+					"description": "Recall Last",
+					"type": "string",
+					"enum": [
+						"Last"
+					]
+				},
+				{
+					"description": "Media Select Video Phone",
+					"type": "string",
+					"enum": [
+						"Videophone"
+					]
+				},
+				{
+					"description": "Media Select Games",
+					"type": "string",
+					"enum": [
+						"Games"
+					]
+				},
+				{
+					"description": "AC Zoom In",
+					"type": "string",
+					"enum": [
+						"ZoomIn"
+					]
+				},
+				{
+					"description": "AC Zoom Out",
+					"type": "string",
+					"enum": [
+						"ZoomOut"
+					]
+				},
+				{
+					"description": "AC Zoom",
+					"type": "string",
+					"enum": [
+						"ZoomReset"
+					]
+				},
+				{
+					"description": "AL Word Processor",
+					"type": "string",
+					"enum": [
+						"WordProcessor"
+					]
+				},
+				{
+					"description": "AL Text Editor",
+					"type": "string",
+					"enum": [
+						"Editor"
+					]
+				},
+				{
+					"description": "AL Spreadsheet",
+					"type": "string",
+					"enum": [
+						"Spreadsheet"
+					]
+				},
+				{
+					"description": "AL Graphics Editor",
+					"type": "string",
+					"enum": [
+						"GraphicsEditor"
+					]
+				},
+				{
+					"description": "AL Presentation App",
+					"type": "string",
+					"enum": [
+						"Presentation"
+					]
+				},
+				{
+					"description": "AL Database App",
+					"type": "string",
+					"enum": [
+						"Database"
+					]
+				},
+				{
+					"description": "AL Newsreader",
+					"type": "string",
+					"enum": [
+						"News"
+					]
+				},
+				{
+					"description": "AL Voicemail",
+					"type": "string",
+					"enum": [
+						"Voicemail"
+					]
+				},
+				{
+					"description": "AL Contacts/Address Book",
+					"type": "string",
+					"enum": [
+						"AddressBook"
+					]
+				},
+				{
+					"description": "AL Instant Messaging",
+					"type": "string",
+					"enum": [
+						"Messenger"
+					]
+				},
+				{
+					"description": "Turn display (LCD) on and off (aka KeyBrightnessToggle)",
+					"type": "string",
+					"enum": [
+						"DisplayToggle"
+					]
+				},
+				{
+					"description": "AL Spell Check",
+					"type": "string",
+					"enum": [
+						"SpellCheck"
+					]
+				},
+				{
+					"description": "AL Logoff",
+					"type": "string",
+					"enum": [
+						"Logoff"
+					]
+				},
+				{
+					"description": "Consumer - transport controls",
+					"type": "string",
+					"enum": [
+						"FrameBack"
+					]
+				},
+				{
+					"description": "GenDesc - system context menu",
+					"type": "string",
+					"enum": [
+						"ContextMenu"
+					]
+				},
+				{
+					"description": "Consumer - transport control",
+					"type": "string",
+					"enum": [
+						"MediaRepeat"
+					]
+				},
+				{
+					"description": "10 channels up (10+)",
+					"type": "string",
+					"enum": [
+						"TenChannelsUp"
+					]
+				},
+				{
+					"description": "10 channels down (10-)",
+					"type": "string",
+					"enum": [
+						"TenChannelsDown"
+					]
+				},
+				{
+					"description": "AL Image Browser",
+					"type": "string",
+					"enum": [
+						"Images"
+					]
+				},
+				{
+					"description": "used by phones, remote controls,",
+					"type": "string",
+					"enum": [
+						"Numeric0"
+					]
+				},
+				{
+					"description": "and other keypads",
+					"type": "string",
+					"enum": [
+						"Numeric1"
+					]
+				},
+				{
+					"description": "Phone key A - HUT Telephony 0xb9",
+					"type": "string",
+					"enum": [
+						"NumericA"
+					]
+				},
+				{
+					"description": "WiFi Protected Setup key",
+					"type": "string",
+					"enum": [
+						"WpsButton"
+					]
+				},
+				{
+					"description": "Request switch touchpad on or off",
+					"type": "string",
+					"enum": [
+						"TouchpadToggle"
+					]
+				},
+				{
+					"description": "Attendant call on or off",
+					"type": "string",
+					"enum": [
+						"AttendantToggle"
+					]
+				},
+				{
+					"description": "Reading light on or off",
+					"type": "string",
+					"enum": [
+						"LightsToggle"
+					]
+				},
+				{
+					"description": "Ambient light sensor",
+					"type": "string",
+					"enum": [
+						"AlsToggle"
+					]
+				},
+				{
+					"description": "AL Button Configuration",
+					"type": "string",
+					"enum": [
+						"ButtonConfig"
+					]
+				},
+				{
+					"description": "AL Task/Project Manager",
+					"type": "string",
+					"enum": [
+						"TaskManager"
+					]
+				},
+				{
+					"description": "AL Log/Journal/Timecard",
+					"type": "string",
+					"enum": [
+						"Journal"
+					]
+				},
+				{
+					"description": "AL Control Panel",
+					"type": "string",
+					"enum": [
+						"ControlPanel"
+					]
+				},
+				{
+					"description": "AL Select Task/Application",
+					"type": "string",
+					"enum": [
+						"AppSelect"
+					]
+				},
+				{
+					"description": "AL Screen Saver",
+					"type": "string",
+					"enum": [
+						"Screensaver"
+					]
+				},
+				{
+					"description": "Listening Voice Command",
+					"type": "string",
+					"enum": [
+						"Voicecommand"
+					]
+				},
+				{
+					"description": "AL Context-aware desktop assistant",
+					"type": "string",
+					"enum": [
+						"Assistant"
+					]
+				},
+				{
+					"description": "AC Next Keyboard Layout Select",
+					"type": "string",
+					"enum": [
+						"KbdLayoutNext"
+					]
+				},
+				{
+					"description": "Show/hide emoji picker (HUTRR101)",
+					"type": "string",
+					"enum": [
+						"EmojiPicker"
+					]
+				},
+				{
+					"description": "Start or Stop Voice Dictation Session (HUTRR99)",
+					"type": "string",
+					"enum": [
+						"Dictate"
+					]
+				},
+				{
+					"description": "Enables programmatic access to camera devices. (HUTRR72)",
+					"type": "string",
+					"enum": [
+						"CameraAccessEnable"
+					]
+				},
+				{
+					"description": "Disables programmatic access to camera devices. (HUTRR72)",
+					"type": "string",
+					"enum": [
+						"CameraAccessDisable"
+					]
+				},
+				{
+					"description": "Toggles the current state of the camera access control. (HUTRR72)",
+					"type": "string",
+					"enum": [
+						"CameraAccessToggle"
+					]
+				},
+				{
+					"description": "Set Brightness to Minimum",
+					"type": "string",
+					"enum": [
+						"BrightnessMin"
+					]
+				},
+				{
+					"description": "Set Brightness to Maximum",
+					"type": "string",
+					"enum": [
+						"BrightnessMax"
+					]
+				},
+				{
+					"description": "Diagonal movement keys",
+					"type": "string",
+					"enum": [
+						"RightUp"
+					]
+				},
+				{
+					"description": "Show Device's Root Menu",
+					"type": "string",
+					"enum": [
+						"RootMenu"
+					]
+				},
+				{
+					"description": "Show Top Menu of the Media (e.g. DVD)",
+					"type": "string",
+					"enum": [
+						"MediaTopMenu"
+					]
+				},
+				{
+					"description": "Toggle Audio Description: refers to an audio service that helps blind and visually impaired consumers understand the action in a program. Note: in some countries this is referred to as \"Video Description\".",
+					"type": "string",
+					"enum": [
+						"AudioDesc"
+					]
+				},
+				{
+					"description": "Video on Demand",
+					"type": "string",
+					"enum": [
+						"Vod"
+					]
+				},
+				{
+					"description": "Control a data application associated with the currently viewed channel, e.g. teletext or data broadcast application (MHEG, MHP, HbbTV, etc.)",
+					"type": "string",
+					"enum": [
+						"Data"
+					]
+				},
+				{
+					"description": "Move the focus to the next user controllable element within a UI container",
+					"type": "string",
+					"enum": [
+						"NextElement"
+					]
+				},
+				{
+					"description": "Move the focus to the previous user controllable element within a UI container",
+					"type": "string",
+					"enum": [
+						"PreviousElement"
+					]
+				},
+				{
+					"description": "Toggle Autopilot engagement",
+					"type": "string",
+					"enum": [
+						"AutopilotEngageToggle"
+					]
+				},
+				{
+					"description": "Marine navigation shortcut key",
+					"type": "string",
+					"enum": [
+						"MarkWaypoint"
+					]
+				},
+				{
+					"description": "Marine navigation shortcut key",
+					"type": "string",
+					"enum": [
+						"SOS"
+					]
+				},
+				{
+					"description": "Marine navigation shortcut key",
+					"type": "string",
+					"enum": [
+						"NavChart"
+					]
+				},
+				{
+					"description": "Marine navigation shortcut key",
+					"type": "string",
+					"enum": [
+						"FishingChart"
+					]
+				},
+				{
+					"description": "Marine navigation shortcut key",
+					"type": "string",
+					"enum": [
+						"SingleRangeRadar"
+					]
+				},
+				{
+					"description": "Marine navigation shortcut key",
+					"type": "string",
+					"enum": [
+						"DualRangeRadar"
+					]
+				},
+				{
+					"description": "Marine navigation shortcut key",
+					"type": "string",
+					"enum": [
+						"RadarOverlay"
+					]
+				},
+				{
+					"description": "Marine navigation shortcut key",
+					"type": "string",
+					"enum": [
+						"TraditionalSonar"
+					]
+				},
+				{
+					"description": "Marine navigation shortcut key",
+					"type": "string",
+					"enum": [
+						"ClearVuSonar"
+					]
+				},
+				{
+					"description": "Marine navigation shortcut key",
+					"type": "string",
+					"enum": [
+						"SideVuSonar"
+					]
+				},
+				{
+					"description": "Marine navigation shortcut key",
+					"type": "string",
+					"enum": [
+						"NavInfo"
+					]
+				},
+				{
+					"description": "Marine navigation shortcut key",
+					"type": "string",
+					"enum": [
+						"BrightnessMenu"
+					]
+				}
+			]
+		},
+		"Overlay": {
+			"type": "object",
+			"required": [
+				"bindings"
+			],
+			"properties": {
+				"bindings": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Binding"
+					}
+				},
+				"label": {
+					"type": [
+						"string",
+						"null"
+					]
+				}
+			}
+		},
+		"StateMapping": {
+			"oneOf": [
+				{
+					"type": "object",
+					"required": [
+						"key"
+					],
+					"properties": {
+						"key": {
+							"$ref": "#/definitions/Key"
+						}
+					},
+					"additionalProperties": false
+				},
+				{
+					"type": "object",
+					"required": [
+						"overlay"
+					],
+					"properties": {
+						"overlay": {
+							"type": "string"
+						}
+					},
+					"additionalProperties": false
+				}
+			]
+		},
+		"Stick": {
+			"type": "string",
+			"enum": [
+				"Left",
+				"Right"
+			]
+		}
+	}
 }

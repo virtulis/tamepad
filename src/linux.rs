@@ -1,5 +1,5 @@
-use std::os::unix::fs::OpenOptionsExt;
 use std::{fs::OpenOptions, io};
+use std::os::unix::fs::OpenOptionsExt;
 
 use crossbeam_channel::select;
 use input_linux::{
@@ -66,6 +66,7 @@ pub fn linux_actions_task(actions: crossbeam_channel::Receiver<Action>) -> io::R
 								KeyState::RELEASED
 							)).as_raw());
 						}
+						_ => {}
 					}
 					if !events.is_empty() {
 						events.push(*InputEvent::from(SynchronizeEvent::new(ZERO, SynchronizeKind::Report, 0)).as_raw());
