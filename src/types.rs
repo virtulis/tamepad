@@ -7,9 +7,10 @@ use serde::{Deserialize, Serialize};
 use strum::{EnumIter, EnumString, IntoStaticStr};
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, JsonSchema, EnumIter, EnumString, IntoStaticStr)]
+#[repr(usize)]
 pub enum Button {
 	
-	A,
+	A = 0,
 	B,
 	X,
 	Y,

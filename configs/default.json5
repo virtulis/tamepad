@@ -20,6 +20,10 @@
 				{
 					button: "B",
 					map: { key: "Dot" }
+				},
+				{
+					button: "DPadLeft",
+					map: { overlay: "abcdef" }
 				}
 			]
 		},
