@@ -27,7 +27,9 @@ pub fn linux_actions_task(actions: crossbeam_channel::Receiver<Action>) -> io::R
 	let uhandle = UInputHandle::new(uinput_file);
 
 	uhandle.set_evbit(EventKind::Key)?;
-	uhandle.set_keybit(input_linux::Key::A)?;
+	for key in Key::iter() {
+		uhandle.set_keybit(KEY_TO_UINPUT[key as usize])?;	
+	}
 
 	// uhandle.set_evbit(EventKind::Relative)?;
 	// uhandle.set_relbit(RelativeAxis::X)?;
