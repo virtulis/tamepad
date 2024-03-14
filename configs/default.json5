@@ -22,41 +22,96 @@
 					map: { key: "Dot" }
 				},
 				{
+					button: "X",
+					map: { key: "Backspace" }
+				},
+				{
 					button: "DPadLeft",
 					map: { overlay: "abcdef" }
+				},
+				{
+					button: "LeftStick",
+					map: { key: "LeftShift" }
+				},
+				{
+					stick: "Left",
+					circle: {
+						minValue: 0.1,
+						sectors: [
+							{
+								fromDegrees: 330,
+								map: { overlay: "abcdef" }
+							},
+							{
+								fromDegrees: 30,
+								map: { overlay: "ghijkl" }
+							},
+							{
+								fromDegrees: 90,
+								map: { overlay: "mnopqr" }
+							},
+							{
+								fromDegrees: 150,
+								map: { overlay: "stuvwx" }
+							},
+							{
+								fromDegrees: 210,
+								map: { overlay: "yz" }
+							},
+							{ fromDegrees: 270 },
+						]
+					}
 				}
 			]
 		},
 		"abcdef": {
 			bindings: [
-				{
-					button: "A",
-					map: { key: "A" }
-				},
-				{
-					combo: "AX",
-					map: { key: "B" }
-				},
-				{
-					button: "X",
-					map: { key: "C" }
-				}
+				{ button: "A", map: { key: "A" } },
+				{ button: "X", map: { key: "B" } },
+				{ combo: "AX", map: { key: "C" } },
+				{ button: "B", map: { key: "D" } },
+				{ button: "Y", map: { key: "E" } },
+				{ combo: "BY", map: { key: "F" } },
 			]
 		},
 		"ghijkl": {
 			bindings: [
-				{
-					button: "A",
-					map: { key: "G" }
-				},
-				{
-					combo: "AX",
-					map: { key: "H" }
-				},
-				{
-					button: "X",
-					map: { key: "I" }
-				}
+				{ button: "A", map: { key: "G" } },
+				{ button: "X", map: { key: "H" } },
+				{ combo: "AX", map: { key: "I" } },
+				{ button: "B", map: { key: "J" } },
+				{ button: "Y", map: { key: "K" } },
+				{ combo: "BY", map: { key: "L" } },
+			]
+		},
+		"mnopqr": {
+			bindings: [
+				{ button: "A", map: { key: "M" } },
+				{ button: "X", map: { key: "N" } },
+				{ combo: "AX", map: { key: "O" } },
+				{ button: "B", map: { key: "P" } },
+				{ button: "Y", map: { key: "Q" } },
+				{ combo: "BY", map: { key: "R" } },
+			]
+		},
+		"stuvwx": {
+			bindings: [
+				{ button: "A", map: { key: "S" } },
+				{ button: "X", map: { key: "T" } },
+				{ combo: "AX", map: { key: "U" } },
+				{ button: "B", map: { key: "V" } },
+				{ button: "Y", map: { key: "W" } },
+				{ combo: "BY", map: { key: "X" } },
+			]
+		},
+		"yz": {
+			bindings: [
+				{ button: "A", map: { key: "Y" } },
+				{ button: "X", map: { key: "Z" } },
+				{ combo: "AX", map: { key: "Semicolon" } },
+				{ button: "B", map: { key: "LeftBrace" } },
+				{ button: "Y", map: { key: "RightBrace" } },
+				{ combo: "BY", map: { key: "Apostrophe" } }
 			]
 		}
 	}

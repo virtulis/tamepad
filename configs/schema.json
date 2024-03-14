@@ -190,42 +190,6 @@
 						"stick"
 					],
 					"properties": {
-						"buttonDown": {
-							"anyOf": [
-								{
-									"$ref": "#/definitions/Action"
-								},
-								{
-									"type": "null"
-								}
-							]
-						},
-						"buttonLabel": {
-							"type": [
-								"string",
-								"null"
-							]
-						},
-						"buttonMap": {
-							"anyOf": [
-								{
-									"$ref": "#/definitions/StateMapping"
-								},
-								{
-									"type": "null"
-								}
-							]
-						},
-						"buttonUp": {
-							"anyOf": [
-								{
-									"$ref": "#/definitions/Action"
-								},
-								{
-									"type": "null"
-								}
-							]
-						},
 						"circle": {
 							"anyOf": [
 								{
@@ -306,22 +270,22 @@
 			"type": "object",
 			"required": [
 				"minValue",
-				"positions"
+				"sectors"
 			],
 			"properties": {
 				"minValue": {
-					"type": "integer",
-					"format": "int16"
+					"type": "number",
+					"format": "double"
 				},
-				"positions": {
+				"sectors": {
 					"type": "array",
 					"items": {
-						"$ref": "#/definitions/CirclePosition"
+						"$ref": "#/definitions/CircleSector"
 					}
 				}
 			}
 		},
-		"CirclePosition": {
+		"CircleSector": {
 			"type": "object",
 			"required": [
 				"fromDegrees"
@@ -349,7 +313,7 @@
 				},
 				"fromDegrees": {
 					"type": "number",
-					"format": "float"
+					"format": "double"
 				},
 				"label": {
 					"type": [
@@ -357,7 +321,7 @@
 						"null"
 					]
 				},
-				"state": {
+				"map": {
 					"anyOf": [
 						{
 							"$ref": "#/definitions/StateMapping"

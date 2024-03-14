@@ -63,7 +63,7 @@ pub fn sdl_task(sender: crossbeam_channel::Sender<InputEvent>) -> Result<(), Str
 			Event::ControllerAxisMotion {
 				which, axis, value, ..
 			} => {
-				sender.send(InputEvent::Axis(which, axis.into(), value))
+				sender.send(InputEvent::AxisMoved(which, axis.into(), value))
 			}
 			Event::ControllerButtonDown { which, button, .. } => {
 				sender.send(InputEvent::ButtonDown(which, button.into()))

@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use fs_extra::file::write_all;
 use indexmap::IndexMap;
 use schemars::{JsonSchema, schema_for};
@@ -46,10 +44,11 @@ impl Button {
 	
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, JsonSchema)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, JsonSchema, EnumIter)]
+#[repr(usize)]
 pub enum Axis {
 	
-	LeftX,
+	LeftX = 0,
 	LeftY,
 	RightX,
 	RightY,
@@ -60,8 +59,9 @@ pub enum Axis {
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, JsonSchema)]
+#[repr(usize)]
 pub enum Stick {
-	Left,
+	Left = 0,
 	Right,
 }
 
@@ -69,7 +69,7 @@ pub enum Stick {
 pub enum InputEvent {
 	ButtonDown(u32, Button),
 	ButtonUp(u32, Button),
-	Axis(u32, Axis, i16),
+	AxisMoved(u32, Axis, i16),
 	Added(u32, String),
 	Removed(u32),
 }
@@ -83,7 +83,7 @@ pub enum Action {
 	RemoveOverlay(String)
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub enum StateMapping {
 	Key(Key),
@@ -107,15 +107,15 @@ pub struct ButtonHandler {
 #[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CircleHandler {
-	pub min_value: i16,
-	pub positions: Vec<CirclePosition>
+	pub min_value: f64,
+	pub sectors: Vec<CircleSector>
 }
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct CirclePosition {
-	pub from_degrees: f32,
-	pub state: Option<StateMapping>,
+pub struct CircleSector {
+	pub from_degrees: f64,
+	pub map: Option<StateMapping>,
 	pub enter: Option<Action>,
 	pub exit: Option<Action>,
 	pub label: Option<String>,
@@ -124,14 +124,7 @@ pub struct CirclePosition {
 #[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct StickHandler {
-	
-	pub button_map: Option<StateMapping>,
-	pub button_down: Option<Action>,
-	pub button_up: Option<Action>,
-	pub button_label: Option<String>,
-	
 	pub circle: Option<CircleHandler>
-	
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

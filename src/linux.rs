@@ -49,7 +49,7 @@ pub fn linux_actions_task(actions: crossbeam_channel::Receiver<Action>) -> io::R
 		let _ = select! {
 			recv(actions) -> act => match act {
 				Ok(act) => {
-					println!("{}", json5::to_string(&act).unwrap());
+					// println!("{}", json5::to_string(&act).unwrap());
 					let mut events = Vec::new();
 					match act {
 						Action::KeyDown(key) => {

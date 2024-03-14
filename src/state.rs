@@ -9,14 +9,16 @@ use indexmap::IndexMap;
 use strum::IntoEnumIterator;
 
 use crate::types::{
-	Action, Binding, Button, ButtonCombo, ButtonHandler, GamepadConfig, InputEvent, Overlay, StateMapping,
+	Action, Axis, Binding, Button, ButtonCombo, ButtonHandler, GamepadConfig, InputEvent, Overlay, StateMapping,
+	StickHandler,
 };
 
 #[derive(Debug)]
 struct CachedOverlay<'a> {
 	overlay: &'a Overlay,
-	buttons: IndexMap<Button, &'a ButtonHandler>,
-	combos: IndexMap<usize, &'a ButtonHandler>,
+	buttons: IndexMap<Button, ButtonHandler>,
+	combos: IndexMap<usize, ButtonHandler>,
+	sticks: IndexMap<usize, StickHandler>,
 }
 #[derive(Default, Debug)]
 struct ButtonComboList<'a> {
@@ -43,14 +45,29 @@ impl Default for ButtonState {
 	}
 }
 
+#[derive(Default, Debug, Clone)]
+struct AxisState {
+	value: f64,
+}
+
+#[derive(Default, Debug, Clone)]
+struct StickState {
+	degrees: f64,
+	value: f64,
+	sector: Option<usize>,
+}
+
 #[derive(Debug)]
 struct State<'a> {
-	pub config: &'a GamepadConfig,
-	pub overlays: IndexMap<String, CachedOverlay<'a>>,
-	pub current_overlays: Vec<usize>,
-	pub button_combos: IndexMap<Button, ButtonComboList<'a>>,
-	pub button_states: Vec<ButtonState>,
-	pub combo_states: Vec<bool>,
+	config: &'a GamepadConfig,
+	// overlays: IndexMap<String, CachedOverlay<'a>>,
+	current_overlays: Vec<usize>,
+	button_combos: IndexMap<Button, ButtonComboList<'a>>,
+	button_states: Vec<ButtonState>,
+	combo_states: Vec<bool>,
+	axis_states: Vec<AxisState>,
+	stick_states: Vec<StickState>,
+	active_maps: Vec<(usize, StateMapping)>,
 }
 
 pub fn state_task(
@@ -62,21 +79,32 @@ pub fn state_task(
 
 	println!("{:?}", &config);
 
-	let overlays = IndexMap::from_iter(config.overlays.iter().map(|(id, overlay)| {
+	let overlays: IndexMap<String, CachedOverlay> = IndexMap::from_iter(config.overlays.iter().map(|(id, overlay)| {
 		let buttons = IndexMap::from_iter(overlay.bindings.iter().filter_map(|b| match b {
-			Binding::Button { button, handler } => Some((*button, handler)),
+			Binding::Button { button, handler } => Some((*button, handler.clone())),
 			_ => None,
 		}));
 		let combos = IndexMap::from_iter(overlay.bindings.iter().filter_map(|b| match b {
 			Binding::Combo { combo, handler } => {
 				let idx = config.combos.get_index_of(combo);
 				match idx {
-					Some(idx) => Some((idx, handler)),
+					Some(idx) => Some((idx, handler.clone())),
 					None => {
 						println!("Combo not found: {}", combo);
 						None
 					}
 				}
+			}
+			_ => None,
+		}));
+		let sticks = IndexMap::from_iter(overlay.bindings.iter().filter_map(|b| match b {
+			Binding::Stick { stick, handler } => {
+				let mut handler = handler.clone();
+				handler
+					.circle
+					.iter_mut()
+					.for_each(|ch| ch.sectors.sort_by(|a, b| a.from_degrees.partial_cmp(&b.from_degrees).unwrap()));
+				Some((*stick as usize, handler))
 			}
 			_ => None,
 		}));
@@ -86,6 +114,7 @@ pub fn state_task(
 				overlay,
 				buttons,
 				combos,
+				sticks,
 			},
 		)
 	}));
@@ -112,32 +141,30 @@ pub fn state_task(
 
 	let button_states = vec![ButtonState::default(); Button::iter().len()];
 	let combo_states = vec![false; Button::iter().len()];
+	let axis_states = vec![AxisState::default(); Axis::iter().len()];
+	let stick_states = vec![StickState::default(); 2];
 
 	let state_arc = Arc::new(RwLock::new(State {
 		config: &config,
-		overlays,
+		// overlays,
 		current_overlays,
 		button_combos,
 		button_states,
 		combo_states,
+		axis_states,
+		stick_states,
+		active_maps: Vec::new(),
 	}));
 
 	let print_state = |state: &State| {
 		let str = Button::iter()
-			.map(|btn| {
+			.filter_map(|btn| {
 				let state = &state.button_states[btn as usize];
 				let name: &'static str = btn.into();
-				format!(
-					"{} {}",
-					name,
-					if !state.down {
-						"."
-					} else if !state.handled {
-						"d"
-					} else {
-						"D"
-					}
-				)
+				if !state.down {
+					return None;
+				}
+				Some(format!("{} {}", name, if !state.handled { "d" } else { "D" }))
 			})
 			.collect::<Vec<String>>()
 			.join("  ");
@@ -171,26 +198,35 @@ pub fn state_task(
 		}
 	};
 
-	let trigger_handler = |state: &mut State, handler: &ButtonHandler, down: bool| {
-		println!("trigger_handler {:?}", handler);
-		if let Some(map) = &handler.map {
-			match map {
-				StateMapping::Key(key) => {
-					action_sender
-						.send(match down {
-							true => Action::KeyDown(*key),
-							false => Action::KeyUp(*key),
-						})
-						.unwrap();
-				}
-				StateMapping::Overlay(name) => {
-					if down {
-						add_overlay(state, name);
-					} else {
-						remove_overlay(state, name);
-					}
+	let trigger_mapping = |state: &mut State, map: &StateMapping, down: bool, oidx| {
+		match map {
+			StateMapping::Key(key) => {
+				action_sender
+					.send(match down {
+						true => Action::KeyDown(*key),
+						false => Action::KeyUp(*key),
+					})
+					.unwrap();
+			}
+			StateMapping::Overlay(name) => {
+				if down {
+					add_overlay(state, name);
+				} else {
+					remove_overlay(state, name);
 				}
 			}
+		}
+		if down {
+			state.active_maps.push((oidx, map.clone()));
+		} else {
+			state.active_maps.retain(|(oidx, other)| *other != *map);
+		}
+	};
+
+	let trigger_handler = |state: &mut State, handler: &ButtonHandler, down: bool, oidx| {
+		// println!("trigger_handler {:?}", handler);
+		if let Some(map) = &handler.map {
+			trigger_mapping(state, &map, down, oidx);
 		}
 	};
 
@@ -205,13 +241,13 @@ pub fn state_task(
 			s.handle_at = None;
 			s.in_combo = None;
 		}
-		let handler = state
+		if let Some((oidx, handler)) = state
 			.current_overlays
 			.iter()
 			.rev()
-			.find_map(|oidx| state.overlays.index(*oidx).combos.get(&idx));
-		if let Some(handler) = handler {
-			trigger_handler(state, handler, false);
+			.find_map(|oidx| overlays.index(*oidx).combos.get(&idx).map(|h| (oidx, h)))
+		{
+			trigger_handler(state, &handler, false, *oidx)
 		}
 	};
 
@@ -231,32 +267,31 @@ pub fn state_task(
 					s.handle_at = None;
 					s.in_combo = Some(*idx);
 				}
-				let handler = state
+				if let Some((oidx, handler)) = state
 					.current_overlays
 					.iter()
 					.rev()
-					.find_map(|oidx| state.overlays.index(*oidx).combos.get(idx));
-				if let Some(handler) = handler {
-					trigger_handler(state, handler, true);
+					.find_map(|oidx| overlays.index(*oidx).combos.get(idx).map(|h| (oidx, h)))
+				{
+					trigger_handler(state, handler, true, *oidx)
 				}
-				return true;
 			}
 		}
 		false
 	};
 
 	let do_handle_button = |mut state: &mut State, btn: Button, down: bool| {
-		println!("do_handle_button {} {}", btn.into_str(), down);
+		// println!("do_handle_button {} {}", btn.into_str(), down);
 		let btn_state = state.button_states.get_mut(btn as usize).unwrap();
 		btn_state.handled = true;
 		btn_state.handle_at = None;
-		let handler = state
+		if let Some((oidx, handler)) = state
 			.current_overlays
 			.iter()
 			.rev()
-			.find_map(|oidx| state.overlays.index(*oidx).buttons.get(&btn));
-		if let Some(handler) = handler {
-			trigger_handler(state, handler, down);
+			.find_map(|oidx| overlays.index(*oidx).buttons.get(&btn).map(|h| (oidx, h)))
+		{
+			trigger_handler(state, &handler, down, *oidx)
 		}
 	};
 
@@ -292,10 +327,81 @@ pub fn state_task(
 		}
 	};
 
+	let update_stick = |state: &mut State, stick: usize, x: f64, y: f64| {
+		let s = &mut state.stick_states[stick];
+		let degrees = (y.atan2(x) + std::f64::consts::PI).to_degrees();
+		let value = x.hypot(y);
+
+		s.degrees = degrees;
+		s.value = value;
+		let prev_sector_idx = s.sector;
+
+		// println!("stick {} {:>7.1} {:>6.2}", stick, degrees, value);
+
+		if let Some((oidx, handler)) = state
+			.current_overlays
+			.iter()
+			.rev()
+			.find_map(|oidx| overlays.index(*oidx).sticks.get(&stick).map(|h| (oidx, h)))
+		{
+			let oidx = *oidx;
+			if let Some(ch) = &handler.circle {
+				let sector = if value > ch.min_value {
+					ch.sectors
+						.iter()
+						.enumerate()
+						.rfind(|(i, s)| s.from_degrees <= degrees)
+						.or_else(|| ch.sectors.iter().enumerate().last())
+				} else {
+					None
+				};
+				let sector_idx = sector.map(|(i, _)| i);
+				let sector = sector.map(|(_, s)| s);
+				s.sector = sector_idx;
+				
+				if sector_idx != prev_sector_idx {
+					// println!("stick {} {:>7.1} {:>6.2} {:?} {:?}", stick, degrees, value, sector_idx, sector);
+					if let Some(psidx) = prev_sector_idx {
+						let prev_sector = &ch.sectors[psidx];
+						if let Some(map) = prev_sector.map.clone() {
+							trigger_mapping(state, &map, false, oidx);
+						}
+					}
+					if let Some(sector) = sector {
+						if let Some(map) = sector.map.clone() {
+							trigger_mapping(state, &map, true, oidx);
+						}
+					}
+				}
+			}
+		}
+	};
+	// ff
+	let update_axis = |state: &mut State, axis: Axis, value| {
+		state.axis_states[axis as usize].value = value;
+		if axis == Axis::LeftX || axis == Axis::LeftY {
+			update_stick(
+				state,
+				0,
+				state.axis_states[Axis::LeftX as usize].value,
+				state.axis_states[Axis::LeftY as usize].value,
+			);
+		} else if axis == Axis::RightX || axis == Axis::RightY {
+			update_stick(
+				state,
+				1,
+				state.axis_states[Axis::RightX as usize].value,
+				state.axis_states[Axis::RightY as usize].value,
+			);
+		}
+		// println!("axis = {:?}", state.axis);
+	};
+
 	loop {
 		let next = {
 			let state = state_arc.read().unwrap();
-			print_state(&state);
+			// print_state(&state);
+			// println!("{:?}", state.active_maps);
 			state.button_states.iter().filter_map(|bs| bs.handle_at).min()
 		};
 		let timeout = if let Some(at) = next {
@@ -306,7 +412,7 @@ pub fn state_task(
 		select! {
 			recv(events) -> ev => {
 				let ev = ev?;
-				println!("{:?}", ev);
+				// println!("{:?}", ev);
 				let mut s = state_arc.write().unwrap();
 				match ev {
 					InputEvent::ButtonDown(_, btn) => {
@@ -315,11 +421,14 @@ pub fn state_task(
 					InputEvent::ButtonUp(_, btn) => {
 						maybe_handle_button(&mut s, btn, false);
 					}
+					InputEvent::AxisMoved(_, axis, value) => {
+						update_axis(&mut s, axis, (value as f64) / 32768.0);
+					}
 					_ => {}
 				}
 			}
 			default(timeout) => {
-				println!("timeout {:?}", timeout);
+				// println!("timeout {:?}", timeout);
 				let mut s = state_arc.write().unwrap();
 				let now = Instant::now();
 				for btn in Button::iter() {
