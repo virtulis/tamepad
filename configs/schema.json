@@ -4,12 +4,19 @@
 	"type": "object",
 	"required": [
 		"baseOverlay",
+		"buttons",
 		"combos",
 		"overlays"
 	],
 	"properties": {
 		"baseOverlay": {
 			"type": "string"
+		},
+		"buttons": {
+			"type": "array",
+			"items": {
+				"$ref": "#/definitions/ButtonConfig"
+			}
 		},
 		"combos": {
 			"type": "object",
@@ -262,6 +269,41 @@
 				"timeout": {
 					"type": "integer",
 					"format": "uint64",
+					"minimum": 0.0
+				}
+			}
+		},
+		"ButtonConfig": {
+			"type": "object",
+			"required": [
+				"button",
+				"x",
+				"y"
+			],
+			"properties": {
+				"borderRadius": {
+					"default": 20,
+					"type": "integer",
+					"format": "uint32",
+					"minimum": 0.0
+				},
+				"button": {
+					"$ref": "#/definitions/Button"
+				},
+				"fillRadius": {
+					"default": 16,
+					"type": "integer",
+					"format": "uint32",
+					"minimum": 0.0
+				},
+				"x": {
+					"type": "integer",
+					"format": "uint32",
+					"minimum": 0.0
+				},
+				"y": {
+					"type": "integer",
+					"format": "uint32",
 					"minimum": 0.0
 				}
 			}

@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0"
 crossbeam-channel = "0.5"
-sdl2 = { version = "0.36" }
+sdl2 = { version = "0.36", features = ["gfx"] }
 input-linux = { version = "0.6", features = ["serde"] }
 libc = "0.2"
 serde = { version = "1.0", features = ["derive"] }

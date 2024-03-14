@@ -90,6 +90,20 @@ pub enum StateMapping {
 	Overlay(String),
 }
 
+fn default_border_radius() -> u32 { 20 }
+fn default_fill_radius() -> u32 { 16 }
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ButtonConfig {
+	pub button: Button,
+	pub x: u32,
+	pub y: u32,
+	#[serde(default = "default_border_radius")]
+	pub border_radius: u32,
+	#[serde(default = "default_fill_radius")]
+	pub fill_radius: u32,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct ButtonCombo {
 	pub timeout: u64,
@@ -157,6 +171,7 @@ pub struct Overlay {
 #[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct GamepadConfig {
+	pub buttons: Vec<ButtonConfig>,
 	pub combos: IndexMap<String, ButtonCombo>,
 	pub overlays: IndexMap<String, Overlay>,
 	pub base_overlay: String,

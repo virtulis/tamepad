@@ -7,6 +7,7 @@ use anyhow::anyhow;
 use crossbeam_channel::select;
 use indexmap::IndexMap;
 use strum::IntoEnumIterator;
+use crate::sdl::send_sdl_event;
 
 use crate::types::{
 	Action, Axis, Binding, Button, ButtonCombo, ButtonHandler, GamepadConfig, InputEvent, Overlay, StateMapping,
@@ -14,21 +15,21 @@ use crate::types::{
 };
 
 #[derive(Debug)]
-struct CachedOverlay<'a> {
-	overlay: &'a Overlay,
+struct CachedOverlay {
+	overlay: Overlay,
 	buttons: IndexMap<Button, ButtonHandler>,
 	combos: IndexMap<usize, ButtonHandler>,
 	sticks: IndexMap<usize, StickHandler>,
 }
 #[derive(Default, Debug)]
-struct ButtonComboList<'a> {
+struct ButtonComboList {
 	max_timeout: u64,
-	combos: Vec<(usize, &'a ButtonCombo)>,
+	combos: Vec<(usize, ButtonCombo)>,
 }
 
 #[derive(Debug, Clone)]
-struct ButtonState {
-	down: bool,
+pub struct ButtonState {
+	pub down: bool,
 	handled: bool,
 	in_combo: Option<usize>,
 	handle_at: Option<Instant>,
@@ -58,15 +59,14 @@ struct StickState {
 }
 
 #[derive(Debug)]
-struct State<'a> {
-	config: &'a GamepadConfig,
-	// overlays: IndexMap<String, CachedOverlay<'a>>,
-	current_overlays: Vec<usize>,
-	button_combos: IndexMap<Button, ButtonComboList<'a>>,
-	button_states: Vec<ButtonState>,
-	combo_states: Vec<bool>,
-	axis_states: Vec<AxisState>,
-	stick_states: Vec<StickState>,
+pub struct State {
+	pub config: GamepadConfig,
+	pub current_overlays: Vec<usize>,
+	pub button_combos: IndexMap<Button, ButtonComboList>,
+	pub button_states: Vec<ButtonState>,
+	pub combo_states: Vec<bool>,
+	pub axis_states: Vec<AxisState>,
+	pub stick_states: Vec<StickState>,
 	active_maps: Vec<(usize, StateMapping)>,
 }
 
@@ -111,7 +111,7 @@ pub fn state_task(
 		(
 			id.clone(),
 			CachedOverlay {
-				overlay,
+				overlay: overlay.clone(),
 				buttons,
 				combos,
 				sticks,
@@ -133,7 +133,7 @@ pub fn state_task(
 			}
 			let list = button_combos.get_mut(btn).unwrap();
 			list.max_timeout = combo.timeout.max(list.max_timeout);
-			list.combos.push((idx, combo));
+			list.combos.push((idx, combo.clone()));
 		}
 	}
 
@@ -145,8 +145,7 @@ pub fn state_task(
 	let stick_states = vec![StickState::default(); 2];
 
 	let state_arc = Arc::new(RwLock::new(State {
-		config: &config,
-		// overlays,
+		config,
 		current_overlays,
 		button_combos,
 		button_states,
@@ -173,7 +172,7 @@ pub fn state_task(
 
 	let add_overlay = |state: &mut State, name: &String| {
 		println!("add_overlay {:?}", name);
-		let idx = config.overlays.get_index_of(name);
+		let idx = overlays.get_index_of(name);
 		match idx {
 			Some(idx) => {
 				if !state.current_overlays.contains(&idx) {
@@ -187,7 +186,7 @@ pub fn state_task(
 	};
 	let remove_overlay = |state: &mut State, name: &String| {
 		println!("remove_overlay {:?}", name);
-		let idx = config.overlays.get_index_of(name);
+		let idx = overlays.get_index_of(name);
 		match idx {
 			Some(idx) => {
 				state.current_overlays.retain(|m| *m != idx);
@@ -397,18 +396,30 @@ pub fn state_task(
 		// println!("axis = {:?}", state.axis);
 	};
 
+	let mut state_sent = false;
+	
 	loop {
+		
+		if !state_sent {
+			state_sent = send_sdl_event(Some(state_arc.clone()));
+		}
+		else {
+			send_sdl_event(None);
+		}
+		
 		let next = {
 			let state = state_arc.read().unwrap();
 			// print_state(&state);
 			// println!("{:?}", state.active_maps);
 			state.button_states.iter().filter_map(|bs| bs.handle_at).min()
 		};
+		
 		let timeout = if let Some(at) = next {
 			at - Instant::now()
 		} else {
 			Duration::from_secs(60)
 		};
+		
 		select! {
 			recv(events) -> ev => {
 				let ev = ev?;

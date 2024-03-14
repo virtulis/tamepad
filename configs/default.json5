@@ -1,4 +1,10 @@
 {
+	"buttons": [
+		{ button: "A", x: 750, y: 400 },
+		{ button: "B", x: 800, y: 350 },
+		{ button: "X", x: 700, y: 350 },
+		{ button: "Y", x: 750, y: 300 }
+	],
 	"combos": {
 		"AX": {
 			"buttons": ["A", "X"],
