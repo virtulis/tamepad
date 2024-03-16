@@ -7,7 +7,6 @@ use anyhow::anyhow;
 use crossbeam_channel::select;
 use indexmap::IndexMap;
 use strum::IntoEnumIterator;
-use crate::sdl::send_sdl_event;
 
 use crate::types::{
 	Action, Axis, Binding, Button, ButtonCombo, ButtonHandler, GamepadConfig, InputEvent, Overlay, StateMapping,
@@ -400,12 +399,12 @@ pub fn state_task(
 	
 	loop {
 		
-		if !state_sent {
-			state_sent = send_sdl_event(Some(state_arc.clone()));
-		}
-		else {
-			send_sdl_event(None);
-		}
+		// if !state_sent {
+		// 	state_sent = send_sdl_event(Some(state_arc.clone()));
+		// }
+		// else {
+		// 	send_sdl_event(None);
+		// }
 		
 		let next = {
 			let state = state_arc.read().unwrap();
