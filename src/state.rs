@@ -7,7 +7,9 @@ use anyhow::anyhow;
 use crossbeam_channel::select;
 use indexmap::IndexMap;
 use strum::IntoEnumIterator;
+use winit::event_loop::EventLoopProxy;
 
+use crate::gui::UIEvent;
 use crate::types::{
 	Action, Axis, Binding, Button, ButtonCombo, ButtonHandler, GamepadConfig, InputEvent, Overlay, StateMapping,
 	StickHandler,
@@ -30,7 +32,7 @@ struct ButtonComboList {
 pub struct ButtonState {
 	pub down: bool,
 	handled: bool,
-	in_combo: Option<usize>,
+	pub in_combo: Option<usize>,
 	handle_at: Option<Instant>,
 }
 
@@ -51,15 +53,21 @@ struct AxisState {
 }
 
 #[derive(Default, Debug, Clone)]
-struct StickState {
-	degrees: f64,
-	value: f64,
-	sector: Option<usize>,
+pub struct StickState {
+	pub degrees: f64,
+	pub value: f64,
+	pub sector: Option<usize>,
+}
+
+#[derive(Debug)]
+pub struct CachedConfig {
+	pub config: GamepadConfig,
+	pub overlays: IndexMap<String, CachedOverlay>,
 }
 
 #[derive(Debug)]
 pub struct State {
-	pub config: GamepadConfig,
+	pub config: Arc<CachedConfig>,
 	pub current_overlays: Vec<usize>,
 	pub button_combos: IndexMap<Button, ButtonComboList>,
 	pub button_states: Vec<ButtonState>,
@@ -69,9 +77,34 @@ pub struct State {
 	active_maps: Vec<(usize, StateMapping)>,
 }
 
+impl State {
+	pub fn find_button_handler<'a>(&self, config: &'a CachedConfig, btn: &Button) -> Option<(usize, &'a ButtonHandler)> {
+		self.current_overlays
+			.iter()
+			.rev()
+			.find_map(|oidx| config.overlays.index(*oidx).buttons.get(btn).map(|h| (*oidx, h)))
+	}
+	
+	pub fn find_combo_handler<'a>(&self, config: &'a CachedConfig, idx: usize) -> Option<(usize, &'a ButtonHandler)> {
+		self.current_overlays
+			.iter()
+			.rev()
+			.find_map(|oidx| config.overlays.index(*oidx).combos.get(&idx).map(|h| (*oidx, h)))
+	}
+	
+	pub fn find_stick_handler<'a>(&self, config: &'a CachedConfig, idx: usize) -> Option<(usize, &'a StickHandler)> {
+		self.current_overlays
+			.iter()
+			.rev()
+			.find_map(|oidx| config.overlays.index(*oidx).sticks.get(&idx).map(|h| (*oidx, h)))
+	}
+	
+}
+
 pub fn state_task(
 	events: crossbeam_channel::Receiver<InputEvent>,
 	action_sender: crossbeam_channel::Sender<Action>,
+	ui_event_proxy: EventLoopProxy<UIEvent>,
 ) -> Result<(), anyhow::Error> {
 	let config = read_to_string("configs/default.json5")?;
 	let config: GamepadConfig = json5::from_str(&config)?;
@@ -142,9 +175,14 @@ pub fn state_task(
 	let combo_states = vec![false; Button::iter().len()];
 	let axis_states = vec![AxisState::default(); Axis::iter().len()];
 	let stick_states = vec![StickState::default(); 2];
-
-	let state_arc = Arc::new(RwLock::new(State {
+	
+	let cached_config = Arc::new(CachedConfig {
 		config,
+		overlays,
+	});
+	
+	let state_arc = Arc::new(RwLock::new(State {
+		config: cached_config.clone(),
 		current_overlays,
 		button_combos,
 		button_states,
@@ -171,7 +209,7 @@ pub fn state_task(
 
 	let add_overlay = |state: &mut State, name: &String| {
 		println!("add_overlay {:?}", name);
-		let idx = overlays.get_index_of(name);
+		let idx = cached_config.overlays.get_index_of(name);
 		match idx {
 			Some(idx) => {
 				if !state.current_overlays.contains(&idx) {
@@ -185,7 +223,7 @@ pub fn state_task(
 	};
 	let remove_overlay = |state: &mut State, name: &String| {
 		println!("remove_overlay {:?}", name);
-		let idx = overlays.get_index_of(name);
+		let idx = cached_config.overlays.get_index_of(name);
 		match idx {
 			Some(idx) => {
 				state.current_overlays.retain(|m| *m != idx);
@@ -229,7 +267,7 @@ pub fn state_task(
 	};
 
 	let combo_up = |state: &mut State, idx: usize| {
-		let combo = state.config.combos.index(idx);
+		let combo = cached_config.config.combos.index(idx);
 		println!("combo up {:?}", combo);
 		state.combo_states[idx] = false;
 		for btn in &combo.buttons {
@@ -239,13 +277,8 @@ pub fn state_task(
 			s.handle_at = None;
 			s.in_combo = None;
 		}
-		if let Some((oidx, handler)) = state
-			.current_overlays
-			.iter()
-			.rev()
-			.find_map(|oidx| overlays.index(*oidx).combos.get(&idx).map(|h| (oidx, h)))
-		{
-			trigger_handler(state, &handler, false, *oidx)
+		if let Some((oidx, handler)) = state.find_combo_handler(&cached_config, idx) {
+			trigger_handler(state, &handler, false, oidx)
 		}
 	};
 
@@ -265,13 +298,8 @@ pub fn state_task(
 					s.handle_at = None;
 					s.in_combo = Some(*idx);
 				}
-				if let Some((oidx, handler)) = state
-					.current_overlays
-					.iter()
-					.rev()
-					.find_map(|oidx| overlays.index(*oidx).combos.get(idx).map(|h| (oidx, h)))
-				{
-					trigger_handler(state, handler, true, *oidx)
+				if let Some((oidx, handler)) = state.find_combo_handler(&cached_config, *idx) {
+					trigger_handler(state, &handler, true, oidx)
 				}
 			}
 		}
@@ -283,13 +311,8 @@ pub fn state_task(
 		let btn_state = state.button_states.get_mut(btn as usize).unwrap();
 		btn_state.handled = true;
 		btn_state.handle_at = None;
-		if let Some((oidx, handler)) = state
-			.current_overlays
-			.iter()
-			.rev()
-			.find_map(|oidx| overlays.index(*oidx).buttons.get(&btn).map(|h| (oidx, h)))
-		{
-			trigger_handler(state, &handler, down, *oidx)
+		if let Some((oidx, handler)) = state.find_button_handler(&cached_config, &btn) {
+			trigger_handler(state, &handler, down, oidx)
 		}
 	};
 
@@ -336,13 +359,7 @@ pub fn state_task(
 
 		// println!("stick {} {:>7.1} {:>6.2}", stick, degrees, value);
 
-		if let Some((oidx, handler)) = state
-			.current_overlays
-			.iter()
-			.rev()
-			.find_map(|oidx| overlays.index(*oidx).sticks.get(&stick).map(|h| (oidx, h)))
-		{
-			let oidx = *oidx;
+		if let Some((oidx, handler)) = state.find_stick_handler(&cached_config, stick) {
 			if let Some(ch) = &handler.circle {
 				let sector = if value > ch.min_value {
 					ch.sectors
@@ -355,8 +372,8 @@ pub fn state_task(
 				};
 				let sector_idx = sector.map(|(i, _)| i);
 				let sector = sector.map(|(_, s)| s);
-				s.sector = sector_idx;
-				
+				state.stick_states[stick].sector = sector_idx;
+
 				if sector_idx != prev_sector_idx {
 					// println!("stick {} {:>7.1} {:>6.2} {:?} {:?}", stick, degrees, value, sector_idx, sector);
 					if let Some(psidx) = prev_sector_idx {
@@ -396,29 +413,31 @@ pub fn state_task(
 	};
 
 	let mut state_sent = false;
-	
+
 	loop {
-		
-		// if !state_sent {
-		// 	state_sent = send_sdl_event(Some(state_arc.clone()));
-		// }
-		// else {
-		// 	send_sdl_event(None);
-		// }
-		
+		if !state_sent {
+			ui_event_proxy.send_event(UIEvent::StateReset(
+				cached_config.clone(),
+				state_arc.clone()
+			))?;
+			state_sent = true;
+		} else {
+			ui_event_proxy.send_event(UIEvent::StateUpdated)?;
+		}
+
 		let next = {
 			let state = state_arc.read().unwrap();
 			// print_state(&state);
 			// println!("{:?}", state.active_maps);
 			state.button_states.iter().filter_map(|bs| bs.handle_at).min()
 		};
-		
+
 		let timeout = if let Some(at) = next {
 			at - Instant::now()
 		} else {
-			Duration::from_secs(60)
+			Duration::from_secs(1)
 		};
-		
+
 		select! {
 			recv(events) -> ev => {
 				let ev = ev?;

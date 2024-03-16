@@ -1,20 +1,41 @@
 {
 	"buttons": [
-		{ button: "A", x: 750, y: 400 },
-		{ button: "B", x: 800, y: 350 },
-		{ button: "X", x: 700, y: 350 },
-		{ button: "Y", x: 750, y: 300 }
+		{ button: "A", x: 750, y: 400, labelOffset: -32.0 },
+		{ button: "B", x: 800, y: 350, labelOffset: 32.0 },
+		{ button: "X", x: 700, y: 350, labelOffset: -32.0 },
+		{ button: "Y", x: 750, y: 300, labelOffset: 32.0 }
 	],
 	"combos": {
 		"AX": {
 			"buttons": ["A", "X"],
-			"timeout": 100
+			"timeout": 100,
+			x: 725,
+			y: 375,
+			labelOffset: -32.0,
+			borderRadius: 12,
+			fillRadius: 10
 		},
 		"BY": {
 			"buttons": ["B", "Y"],
-			"timeout": 100
+			"timeout": 100,
+			x: 775,
+			y: 325,
+			labelOffset: 32.0,
+			borderRadius: 12,
+			fillRadius: 10
 		}
 	},
+	sticks: [
+		{
+			draw:  {
+				x: 250,
+				y: 500,
+				borderRadius: 150
+			},
+			center: {},
+			point: {}
+		}
+	],
 	"baseOverlay": "base",
 	"overlays": {
 		"base": {
@@ -33,7 +54,7 @@
 				},
 				{
 					button: "DPadLeft",
-					map: { overlay: "abcdef" }
+					map: { overlay: "alpha1" }
 				},
 				{
 					button: "LeftStick",
@@ -46,71 +67,71 @@
 						sectors: [
 							{
 								fromDegrees: 330,
-								map: { overlay: "abcdef" }
+								map: { overlay: "alpha1" }
 							},
 							{
 								fromDegrees: 30,
-								map: { overlay: "ghijkl" }
+								map: { overlay: "alpha2" }
 							},
 							{
 								fromDegrees: 90,
-								map: { overlay: "mnopqr" }
+								map: { overlay: "alpha3" }
 							},
 							{
 								fromDegrees: 150,
-								map: { overlay: "stuvwx" }
+								map: { overlay: "alpha4" }
 							},
 							{
 								fromDegrees: 210,
-								map: { overlay: "yz" }
+								map: { overlay: "alpha5" }
 							},
-							{ fromDegrees: 270 },
+							{ fromDegrees: 270 }
 						]
 					}
 				}
 			]
 		},
-		"abcdef": {
+		"alpha1": {
 			bindings: [
 				{ button: "A", map: { key: "A" } },
 				{ button: "X", map: { key: "B" } },
 				{ combo: "AX", map: { key: "C" } },
 				{ button: "B", map: { key: "D" } },
 				{ button: "Y", map: { key: "E" } },
-				{ combo: "BY", map: { key: "F" } },
+				{ combo: "BY", map: { key: "F" } }
 			]
 		},
-		"ghijkl": {
+		"alpha2": {
 			bindings: [
 				{ button: "A", map: { key: "G" } },
 				{ button: "X", map: { key: "H" } },
 				{ combo: "AX", map: { key: "I" } },
 				{ button: "B", map: { key: "J" } },
 				{ button: "Y", map: { key: "K" } },
-				{ combo: "BY", map: { key: "L" } },
+				{ combo: "BY", map: { key: "L" } }
 			]
 		},
-		"mnopqr": {
+		"alpha3": {
 			bindings: [
 				{ button: "A", map: { key: "M" } },
 				{ button: "X", map: { key: "N" } },
 				{ combo: "AX", map: { key: "O" } },
 				{ button: "B", map: { key: "P" } },
 				{ button: "Y", map: { key: "Q" } },
-				{ combo: "BY", map: { key: "R" } },
+				{ combo: "BY", map: { key: "R" } }
 			]
 		},
-		"stuvwx": {
+		"alpha4": {
 			bindings: [
 				{ button: "A", map: { key: "S" } },
 				{ button: "X", map: { key: "T" } },
 				{ combo: "AX", map: { key: "U" } },
 				{ button: "B", map: { key: "V" } },
 				{ button: "Y", map: { key: "W" } },
-				{ combo: "BY", map: { key: "X" } },
+				{ combo: "BY", map: { key: "X" } }
 			]
 		},
-		"yz": {
+		"alpha5": {
 			bindings: [
 				{ button: "A", map: { key: "Y" } },
 				{ button: "X", map: { key: "Z" } },

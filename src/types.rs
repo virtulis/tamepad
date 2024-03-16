@@ -36,14 +36,6 @@ pub enum Button {
 	
 }
 
-impl Button {
-	
-	pub fn into_str(self) -> &'static str {
-		self.into()
-	}
-	
-}
-
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, JsonSchema, EnumIter)]
 #[repr(usize)]
 pub enum Axis {
@@ -90,24 +82,48 @@ pub enum StateMapping {
 	Overlay(String),
 }
 
-fn default_border_radius() -> u32 { 20 }
-fn default_fill_radius() -> u32 { 16 }
+fn default_zero() -> f32 { 0. }
+fn default_border_radius() -> f32 { 16. }
+fn default_fill_radius() -> f32 { 14. }
+fn default_label_offset() -> f32 { 32. }
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ButtonDrawConfig {
+	#[serde(default = "default_zero")]
+	pub x: f32,
+	#[serde(default = "default_zero")]
+	pub y: f32,
+	#[serde(default = "default_border_radius")]
+	pub border_radius: f32,
+	#[serde(default = "default_fill_radius")]
+	pub fill_radius: f32,
+	#[serde(default = "default_label_offset")]
+	pub label_offset: f32,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ButtonConfig {
 	pub button: Button,
-	pub x: u32,
-	pub y: u32,
-	#[serde(default = "default_border_radius")]
-	pub border_radius: u32,
-	#[serde(default = "default_fill_radius")]
-	pub fill_radius: u32,
+	#[serde(flatten)]
+	pub draw: ButtonDrawConfig,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct StickConfig {
+	pub draw: ButtonDrawConfig,
+	pub center: ButtonDrawConfig,
+	pub point: ButtonDrawConfig,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct ButtonCombo {
 	pub timeout: u64,
-	pub buttons: Vec<Button>, 
+	pub buttons: Vec<Button>,
+	#[serde(flatten)]
+	pub draw: ButtonDrawConfig,
 }
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -173,12 +189,13 @@ pub struct Overlay {
 pub struct GamepadConfig {
 	pub buttons: Vec<ButtonConfig>,
 	pub combos: IndexMap<String, ButtonCombo>,
+	pub sticks: Vec<StickConfig>,
 	pub overlays: IndexMap<String, Overlay>,
 	pub base_overlay: String,
 }
 
 /// Copied from input-linux, mapped to it by name
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, JsonSchema, EnumIter)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, JsonSchema, EnumIter, IntoStaticStr)]
 pub enum Key {
 	
 	Reserved = 0,
@@ -933,6 +950,18 @@ pub enum Key {
 	KbdLcdMenu5,
 	
 }
+
+macro_rules! impl_static_str {
+    ($ty:ty) => {
+		impl $ty {
+			pub fn into_static_str(self) -> &'static str {
+				self.into()
+			}
+		}
+	};
+}
+impl_static_str!(Button);
+impl_static_str!(Key);
 
 pub fn write_schema() {
 	

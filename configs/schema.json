@@ -6,7 +6,8 @@
 		"baseOverlay",
 		"buttons",
 		"combos",
-		"overlays"
+		"overlays",
+		"sticks"
 	],
 	"properties": {
 		"baseOverlay": {
@@ -28,6 +29,12 @@
 			"type": "object",
 			"additionalProperties": {
 				"$ref": "#/definitions/Overlay"
+			}
+		},
+		"sticks": {
+			"type": "array",
+			"items": {
+				"$ref": "#/definitions/StickConfig"
 			}
 		}
 	},
@@ -260,51 +267,107 @@
 				"timeout"
 			],
 			"properties": {
+				"borderRadius": {
+					"default": 16.0,
+					"type": "number",
+					"format": "float"
+				},
 				"buttons": {
 					"type": "array",
 					"items": {
 						"$ref": "#/definitions/Button"
 					}
 				},
+				"fillRadius": {
+					"default": 14.0,
+					"type": "number",
+					"format": "float"
+				},
+				"labelOffset": {
+					"default": 32.0,
+					"type": "number",
+					"format": "float"
+				},
 				"timeout": {
 					"type": "integer",
 					"format": "uint64",
 					"minimum": 0.0
+				},
+				"x": {
+					"default": 0.0,
+					"type": "number",
+					"format": "float"
+				},
+				"y": {
+					"default": 0.0,
+					"type": "number",
+					"format": "float"
 				}
 			}
 		},
 		"ButtonConfig": {
 			"type": "object",
 			"required": [
-				"button",
-				"x",
-				"y"
+				"button"
 			],
 			"properties": {
 				"borderRadius": {
-					"default": 20,
-					"type": "integer",
-					"format": "uint32",
-					"minimum": 0.0
+					"default": 16.0,
+					"type": "number",
+					"format": "float"
 				},
 				"button": {
 					"$ref": "#/definitions/Button"
 				},
 				"fillRadius": {
-					"default": 16,
-					"type": "integer",
-					"format": "uint32",
-					"minimum": 0.0
+					"default": 14.0,
+					"type": "number",
+					"format": "float"
+				},
+				"labelOffset": {
+					"default": 32.0,
+					"type": "number",
+					"format": "float"
 				},
 				"x": {
-					"type": "integer",
-					"format": "uint32",
-					"minimum": 0.0
+					"default": 0.0,
+					"type": "number",
+					"format": "float"
 				},
 				"y": {
-					"type": "integer",
-					"format": "uint32",
-					"minimum": 0.0
+					"default": 0.0,
+					"type": "number",
+					"format": "float"
+				}
+			}
+		},
+		"ButtonDrawConfig": {
+			"type": "object",
+			"properties": {
+				"borderRadius": {
+					"default": 16.0,
+					"type": "number",
+					"format": "float"
+				},
+				"fillRadius": {
+					"default": 14.0,
+					"type": "number",
+					"format": "float"
+				},
+				"labelOffset": {
+					"default": 32.0,
+					"type": "number",
+					"format": "float"
+				},
+				"x": {
+					"default": 0.0,
+					"type": "number",
+					"format": "float"
+				},
+				"y": {
+					"default": 0.0,
+					"type": "number",
+					"format": "float"
 				}
 			}
 		},
@@ -1826,6 +1889,25 @@
 				"Left",
 				"Right"
 			]
+		},
+		"StickConfig": {
+			"type": "object",
+			"required": [
+				"center",
+				"draw",
+				"point"
+			],
+			"properties": {
+				"center": {
+					"$ref": "#/definitions/ButtonDrawConfig"
+				},
+				"draw": {
+					"$ref": "#/definitions/ButtonDrawConfig"
+				},
+				"point": {
+					"$ref": "#/definitions/ButtonDrawConfig"
+				}
+			}
 		}
 	}
 }
