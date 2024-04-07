@@ -2,14 +2,14 @@ use std::f32::consts::{PI, TAU};
 use std::num::NonZeroU32;
 use std::sync::{Arc, RwLock};
 
-use femtovg::renderer::OpenGl;
 use femtovg::{Canvas, Color, Paint, Path, Renderer, Solidity};
-use glutin::display::Display;
-use glutin::surface::{Surface, SurfaceAttributesBuilder, WindowSurface};
+use femtovg::renderer::OpenGl;
 use glutin::{
 	config::ConfigTemplateBuilder, context::ContextAttributesBuilder, context::PossiblyCurrentContext,
 	display::GetGlDisplay, prelude::*,
 };
+use glutin::display::Display;
+use glutin::surface::{Surface, SurfaceAttributesBuilder, WindowSurface};
 use glutin_winit::DisplayBuilder;
 use raw_window_handle::HasRawWindowHandle;
 use winit::event::{Event, WindowEvent};
@@ -23,6 +23,7 @@ use crate::types::{ButtonHandler, StateMapping};
 pub enum UIEvent {
 	StateReset(Arc<CachedConfig>, Arc<RwLock<State>>),
 	StateUpdated,
+	Quit,
 }
 
 pub fn init_gui() -> (
@@ -91,9 +92,8 @@ pub fn gui_loop(
 	let mut state_refs = None;
 
 	event_loop
-		.run(|event, _target| match event {
-			Event::WindowEvent { window_id, event } => {
-				// println!("{:?}", event);
+		.run(|event, target| match event {
+			Event::WindowEvent { window_id: _, event } => {
 				match event {
 					WindowEvent::RedrawRequested => {
 						println!("redraw? {:?}", state_refs.is_some());
@@ -101,6 +101,9 @@ pub fn gui_loop(
 							render_gui(&context, &surface, &window, &mut canvas, &state, &config);
 						}
 						window.focus_window();
+					}
+					WindowEvent::CloseRequested => {
+						target.exit()
 					}
 					_ => {}
 				}
@@ -112,6 +115,9 @@ pub fn gui_loop(
 				}
 				UIEvent::StateUpdated => {
 					window.request_redraw();
+				}
+				UIEvent::Quit => {
+					target.exit()
 				}
 			},
 			_ => {}

@@ -18,7 +18,9 @@ lazy_static! {
 	}).collect();
 }
 
-pub fn linux_actions_task(actions: crossbeam_channel::Receiver<Action>) -> io::Result<()> {
+pub fn linux_actions_task(
+	actions: crossbeam_channel::Receiver<Action>,
+) -> io::Result<()> {
 	let uinput_file = OpenOptions::new()
 		.read(false)
 		.write(true)
@@ -28,7 +30,7 @@ pub fn linux_actions_task(actions: crossbeam_channel::Receiver<Action>) -> io::R
 
 	uhandle.set_evbit(EventKind::Key)?;
 	for key in Key::iter() {
-		uhandle.set_keybit(KEY_TO_UINPUT[key as usize])?;	
+		uhandle.set_keybit(KEY_TO_UINPUT[key as usize])?;
 	}
 
 	// uhandle.set_evbit(EventKind::Relative)?;
@@ -78,11 +80,11 @@ pub fn linux_actions_task(actions: crossbeam_channel::Receiver<Action>) -> io::R
 						}
 					}
 				}
-				Err(e) => {
-					println!("{:?}", e);
+				Err(_) => {
+					// println!("{:?}", e);
 					break;
 				}
-			}
+			},
 		};
 	}
 

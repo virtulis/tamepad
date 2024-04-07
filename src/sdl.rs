@@ -1,12 +1,23 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+
+use sdl2::event::EventSender;
 
 use crate::types::{Axis, Button, InputEvent};
 
-pub fn sdl_task(sender: crossbeam_channel::Sender<InputEvent>) -> Result<(), String> {
+pub fn sdl_task(
+	sender: crossbeam_channel::Sender<InputEvent>,
+	sdl_sender_box: Arc<Mutex<Option<EventSender>>>
+) -> Result<(), String> {
+	
 	let sdl_context = sdl2::init()?;
 	let joystick_subsystem = sdl_context.joystick()?;
 	let game_controller_subsystem = sdl_context.game_controller()?;
+	
+	sdl_sender_box.lock().unwrap().replace(
+		sdl_context.event().unwrap().event_sender()	
+	);
 
 	let controllers = RefCell::new(HashMap::new());
 
@@ -53,7 +64,7 @@ pub fn sdl_task(sender: crossbeam_channel::Sender<InputEvent>) -> Result<(), Str
 			maybe_add_controller(id);
 		}
 	}
-
+	
 	for event in sdl_context.event_pump()?.wait_iter() {
 		use sdl2::event::Event;
 

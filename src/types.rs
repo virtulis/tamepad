@@ -4,6 +4,10 @@ use schemars::{JsonSchema, schema_for};
 use serde::{Deserialize, Serialize};
 use strum::{EnumIter, EnumString, IntoStaticStr};
 
+pub enum MainEvent {
+	Quit
+}
+
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize, JsonSchema, EnumIter, EnumString, IntoStaticStr)]
 #[repr(usize)]
 pub enum Button {

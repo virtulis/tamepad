@@ -11,8 +11,8 @@ use winit::event_loop::EventLoopProxy;
 
 use crate::gui::UIEvent;
 use crate::types::{
-	Action, Axis, Binding, Button, ButtonCombo, ButtonHandler, GamepadConfig, InputEvent, Overlay, StateMapping,
-	StickHandler,
+	Action, Axis, Binding, Button, ButtonCombo, ButtonHandler, GamepadConfig, InputEvent, MainEvent, Overlay,
+	StateMapping, StickHandler,
 };
 
 #[derive(Debug)]
@@ -78,33 +78,37 @@ pub struct State {
 }
 
 impl State {
-	pub fn find_button_handler<'a>(&self, config: &'a CachedConfig, btn: &Button) -> Option<(usize, &'a ButtonHandler)> {
+	pub fn find_button_handler<'a>(
+		&self,
+		config: &'a CachedConfig,
+		btn: &Button,
+	) -> Option<(usize, &'a ButtonHandler)> {
 		self.current_overlays
 			.iter()
 			.rev()
 			.find_map(|oidx| config.overlays.index(*oidx).buttons.get(btn).map(|h| (*oidx, h)))
 	}
-	
+
 	pub fn find_combo_handler<'a>(&self, config: &'a CachedConfig, idx: usize) -> Option<(usize, &'a ButtonHandler)> {
 		self.current_overlays
 			.iter()
 			.rev()
 			.find_map(|oidx| config.overlays.index(*oidx).combos.get(&idx).map(|h| (*oidx, h)))
 	}
-	
+
 	pub fn find_stick_handler<'a>(&self, config: &'a CachedConfig, idx: usize) -> Option<(usize, &'a StickHandler)> {
 		self.current_overlays
 			.iter()
 			.rev()
 			.find_map(|oidx| config.overlays.index(*oidx).sticks.get(&idx).map(|h| (*oidx, h)))
 	}
-	
 }
 
 pub fn state_task(
 	events: crossbeam_channel::Receiver<InputEvent>,
 	action_sender: crossbeam_channel::Sender<Action>,
 	ui_event_proxy: EventLoopProxy<UIEvent>,
+	main_events: crossbeam_channel::Receiver<MainEvent>,
 ) -> Result<(), anyhow::Error> {
 	let config = read_to_string("configs/default.json5")?;
 	let config: GamepadConfig = json5::from_str(&config)?;
@@ -175,12 +179,9 @@ pub fn state_task(
 	let combo_states = vec![false; Button::iter().len()];
 	let axis_states = vec![AxisState::default(); Axis::iter().len()];
 	let stick_states = vec![StickState::default(); 2];
-	
-	let cached_config = Arc::new(CachedConfig {
-		config,
-		overlays,
-	});
-	
+
+	let cached_config = Arc::new(CachedConfig { config, overlays });
+
 	let state_arc = Arc::new(RwLock::new(State {
 		config: cached_config.clone(),
 		current_overlays,
@@ -416,10 +417,7 @@ pub fn state_task(
 
 	loop {
 		if !state_sent {
-			ui_event_proxy.send_event(UIEvent::StateReset(
-				cached_config.clone(),
-				state_arc.clone()
-			))?;
+			ui_event_proxy.send_event(UIEvent::StateReset(cached_config.clone(), state_arc.clone()))?;
 			state_sent = true;
 		} else {
 			ui_event_proxy.send_event(UIEvent::StateUpdated)?;
@@ -439,21 +437,31 @@ pub fn state_task(
 		};
 
 		select! {
+			recv(main_events) -> _ev => {
+				// currently just quit
+				return Ok(());
+			}
 			recv(events) -> ev => {
-				let ev = ev?;
-				// println!("{:?}", ev);
-				let mut s = state_arc.write().unwrap();
 				match ev {
-					InputEvent::ButtonDown(_, btn) => {
-						maybe_handle_button(&mut s, btn, true);
+					Ok(ev) => {
+						// println!("{:?}", ev);
+						let mut s = state_arc.write().unwrap();
+						match ev {
+							InputEvent::ButtonDown(_, btn) => {
+								maybe_handle_button(&mut s, btn, true);
+							}
+							InputEvent::ButtonUp(_, btn) => {
+								maybe_handle_button(&mut s, btn, false);
+							}
+							InputEvent::AxisMoved(_, axis, value) => {
+								update_axis(&mut s, axis, (value as f64) / 32768.0);
+							}
+							_ => {}
+						}
+					},
+					Err(_) => {
+						return Ok(());
 					}
-					InputEvent::ButtonUp(_, btn) => {
-						maybe_handle_button(&mut s, btn, false);
-					}
-					InputEvent::AxisMoved(_, axis, value) => {
-						update_axis(&mut s, axis, (value as f64) / 32768.0);
-					}
-					_ => {}
 				}
 			}
 			default(timeout) => {
